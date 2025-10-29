@@ -1,0 +1,11 @@
+# controlplane patch (excerpt)
+cluster:
+  network:
+    cni:
+      name: none     # install Cilium right after bootstrap
+
+machine:
+  features:
+    kubePrism:
+      enabled: true
+      port: 7445     # default; safe to keep

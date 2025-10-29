@@ -1,0 +1,15 @@
+machine:
+  network:
+    hostname: "${hostname}"
+    interfaces:
+      - interface: "${vip_interface}"
+        addresses:
+          - "${ip}/${cidr}"
+        routes:
+          - network: "0.0.0.0/0"
+            gateway: "${gateway}"
+        vip:
+          ip: "${api_vip}"     # 192.168.2.20
+    nameservers:
+      - "${dns1}"
+      - "${dns2}"

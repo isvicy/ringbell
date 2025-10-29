@@ -1,0 +1,41 @@
+# Libvirt
+libvirt_uri            = "qemu:///system"
+pool_name              = "talos"
+pool_path              = "/mnt/user/domains/talos"
+talos_image_local_path = "/mnt/user/isos/talos-amd64.qcow2" # place the QCOW2 here
+
+# Networking
+bridge_name  = "br0"
+api_vip      = "192.168.2.20"
+vip_interface= "eth0"
+gateway      = "192.168.2.1"
+dns_servers  = ["192.168.2.1","1.1.1.1"]
+cidr         = 24
+
+# Nodes
+controlplanes = {
+  cp-01 = { name = "cp-01", ip = "192.168.2.21", mac = "52:54:00:aa:02:21" }
+  cp-02 = { name = "cp-02", ip = "192.168.2.22", mac = "52:54:00:aa:02:22" }
+  cp-03 = { name = "cp-03", ip = "192.168.2.23", mac = "52:54:00:aa:02:23" }
+}
+
+workers = {
+  w-01  = { name = "w-01",  ip = "192.168.2.24", mac = "52:54:00:aa:02:24" }
+  w-02  = { name = "w-02",  ip = "192.168.2.25", mac = "52:54:00:aa:02:25" }
+}
+
+# Sizing
+cp_vcpu      = 4
+cp_memory_mb = 16384
+cp_disk_gb   = 80
+
+wk_vcpu      = 8
+wk_memory_mb = 32768
+wk_disk_gb   = 120
+
+# Talos/Kubernetes
+talos_version      = "v1.11.3"
+kubernetes_version = "1.34.1"
+kubevip_tag        = "v0.8.0"
+cluster_name       = "ringbell"
+bootstrap_ip       = "192.168.2.21"
