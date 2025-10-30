@@ -3,6 +3,8 @@ cluster:
   network:
     cni:
       name: none     # install Cilium right after bootstrap
+  proxy:
+    disabled: true
 
 machine:
   features:
