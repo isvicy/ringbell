@@ -29,15 +29,15 @@ variable "api_vip" {
 }
 
 variable "vip_interface" {
-  description = "Interface name inside Talos for kube-vip (eth0)"
+  description = "Interface name inside Talos for kube-vip (enp1s0)"
   type        = string
-  default     = "eth0"
+  default     = "enp1s0"
 }
 
 variable "interface" {
-  description = "Interface name inside Talos (eth0)"
+  description = "Interface name inside Talos (enp1s0)"
   type        = string
-  default     = "eth0"
+  default     = "enp1s0"
 }
 
 variable "gateway" {

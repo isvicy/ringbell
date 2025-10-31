@@ -7,7 +7,7 @@ talos_image_local_path = "/mnt/user/isos/talos-amd64.qcow2" # place the QCOW2 he
 # Networking
 bridge_name  = "br0"
 api_vip      = "192.168.2.20"
-vip_interface= "eth0"
+vip_interface= "enp1s0"
 gateway      = "192.168.2.1"
 dns_servers  = ["192.168.2.1","1.1.1.1"]
 cidr         = 24
