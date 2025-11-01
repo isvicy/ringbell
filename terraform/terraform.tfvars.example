@@ -1,13 +1,17 @@
-# Libvirt
+# Libvirt pools
+cp_pool_name = "talos-ssd"
+cp_pool_path = "/mnt/ssd/domains/talos"
+
+wk_pool_name = "talos-ultra"
+wk_pool_path = "/mnt/ultra/domains/talos"
+
+# If you prefer to keep the image in a standard place, leave empty to use ./images/...
 libvirt_uri            = "qemu:///system"
-pool_name              = "talos"
-pool_path              = "/mnt/user/domains/talos"
-talos_image_local_path = "/mnt/user/isos/talos-amd64.qcow2" # place the QCOW2 here
+talos_image_local_path = "/mnt/user/isos/talos-amd64.qcow2"
 
 # Networking
 bridge_name  = "br0"
 api_vip      = "192.168.2.20"
-vip_interface= "enp1s0"
 gateway      = "192.168.2.1"
 dns_servers  = ["192.168.2.1","1.1.1.1"]
 cidr         = 24
@@ -31,11 +35,11 @@ cp_disk_gb   = 80
 
 wk_vcpu      = 8
 wk_memory_mb = 32768
-wk_disk_gb   = 120
+wk_disk_gb   = 160   # worker root on NVMe
+wk_data_gb   = 180   # extra data disk on NVMe
 
 # Talos/Kubernetes
 talos_version      = "v1.11.3"
 kubernetes_version = "1.34.1"
-kubevip_tag        = "v0.8.0"
 cluster_name       = "ringbell"
 bootstrap_ip       = "192.168.2.21"

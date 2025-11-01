@@ -1,16 +1,21 @@
 # bootstrap instructions
 
-This is a step-by-step instruction on how to bootstrap a Talos Kubernetes cluster using Terraform and **libvirt**.
+This bootstraps a Talos Kubernetes cluster on **libvirt** with:
+- **Dual pools**: SSD pool for control-planes, NVMe pool for workers
+- **Talos native VIP** for the API (no kube-vip static pod)
+- Cilium (kube-proxy replacement)
 
-## vms and talos cluster
+## VMs and Talos cluster
 
 ```bash
 terraform init --upgrade
 
-# Phase 1: create libvirt resources (VMs & disks)
+# Phase 1: create libvirt resources (pools/images/VMs & disks)
 terraform apply \
-  -target=libvirt_pool.talos \
-  -target=libvirt_volume.talos_base \
+  -target=libvirt_pool.cp \
+  -target=libvirt_pool.wk \
+  -target=libvirt_volume.talos_base_ssd \
+  -target=libvirt_volume.talos_base_ultra \
   -target=module.controlplanes \
   -target=module.workers
 

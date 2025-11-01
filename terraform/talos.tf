@@ -32,14 +32,14 @@ resource "talos_machine_configuration_apply" "cp" {
   machine_configuration_input = data.talos_machine_configuration.controlplane.machine_configuration
   config_patches = [
     templatefile("${path.module}/templates/controlplane_network_patch.yaml.tmpl", {
-      hostname      = each.value.name
-      ip            = each.value.ip
-      cidr          = var.cidr
-      gateway       = var.gateway
-      api_vip       = var.api_vip
-      vip_interface = var.vip_interface
-      dns1          = var.dns_servers[0]
-      dns2          = length(var.dns_servers) > 1 ? var.dns_servers[1] : var.dns_servers[0]
+      hostname = each.value.name
+      ip       = each.value.ip
+      cidr     = var.cidr
+      gateway  = var.gateway
+      api_vip  = var.api_vip
+      dns1     = var.dns_servers[0]
+      dns2     = length(var.dns_servers) > 1 ? var.dns_servers[1] : var.dns_servers[0]
+      mac      = each.value.mac
     }),
     file("${path.module}/templates/controlplane_patch.yaml")
   ]
@@ -55,13 +55,13 @@ resource "talos_machine_configuration_apply" "wk" {
   machine_configuration_input = data.talos_machine_configuration.worker.machine_configuration
   config_patches = [
     templatefile("${path.module}/templates/worker_network_patch.yaml.tmpl", {
-      hostname  = each.value.name
-      ip        = each.value.ip
-      cidr      = var.cidr
-      gateway   = var.gateway
-      interface = var.interface
-      dns1      = var.dns_servers[0]
-      dns2      = length(var.dns_servers) > 1 ? var.dns_servers[1] : var.dns_servers[0]
+      hostname = each.value.name
+      ip       = each.value.ip
+      cidr     = var.cidr
+      gateway  = var.gateway
+      dns1     = var.dns_servers[0]
+      dns2     = length(var.dns_servers) > 1 ? var.dns_servers[1] : var.dns_servers[0]
+      mac      = each.value.mac
     }),
     file("${path.module}/templates/worker_patch.yaml")
   ]

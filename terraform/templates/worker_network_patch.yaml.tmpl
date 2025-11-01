@@ -2,7 +2,9 @@ machine:
   network:
     hostname: "${hostname}"
     interfaces:
-      - interface: "${interface}"
+      - deviceSelector:
+          hardwareAddr: "${mac}"
+        dhcp: false
         addresses:
           - "${ip}/${cidr}"
         routes:

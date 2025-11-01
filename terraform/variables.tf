@@ -1,13 +1,26 @@
-variable "pool_name" {
-  description = "Libvirt storage pool name"
+# ---------- Libvirt pools ----------
+variable "cp_pool_name" {
+  description = "Libvirt storage pool name for control-planes (SSD)"
   type        = string
-  default     = "talos"
+  default     = "talos-ssd"
 }
 
-variable "pool_path" {
-  description = "Directory path for the libvirt storage pool"
+variable "cp_pool_path" {
+  description = "Directory path for the SSD pool"
   type        = string
-  default     = "/mnt/user/domains/talos"
+  default     = "/mnt/ssd/domains/talos"
+}
+
+variable "wk_pool_name" {
+  description = "Libvirt storage pool name for workers (NVMe)"
+  type        = string
+  default     = "talos-ultra"
+}
+
+variable "wk_pool_path" {
+  description = "Directory path for the NVMe pool"
+  type        = string
+  default     = "/mnt/ultra/domains/talos"
 }
 
 variable "talos_image_local_path" {
@@ -22,22 +35,11 @@ variable "bridge_name" {
   default     = "br0"
 }
 
+# ---------- Networking ----------
 variable "api_vip" {
-  description = "Kubernetes API VIP (kube-vip)"
+  description = "Kubernetes API VIP (Talos native VIP)"
   type        = string
   default     = "192.168.2.20"
-}
-
-variable "vip_interface" {
-  description = "Interface name inside Talos for kube-vip (enp1s0)"
-  type        = string
-  default     = "enp1s0"
-}
-
-variable "interface" {
-  description = "Interface name inside Talos (enp1s0)"
-  type        = string
-  default     = "enp1s0"
 }
 
 variable "gateway" {
@@ -85,11 +87,11 @@ variable "workers" {
   }
 }
 
+# ---------- Sizing ----------
 variable "cp_vcpu" {
   type    = number
   default = 4
 }
-
 variable "cp_memory_mb" {
   type    = number
   default = 16384
@@ -109,35 +111,27 @@ variable "wk_memory_mb" {
 }
 variable "wk_disk_gb" {
   type    = number
-  default = 120
+  default = 160
+} # worker root disk (on NVMe)
+variable "wk_data_gb" {
+  type    = number
+  default = 180
 }
 
+# ---------- Talos / Kubernetes ----------
 variable "talos_version" {
-  description = "Talos OS version tag"
-  type        = string
-  default     = "v1.11.3"
+  type    = string
+  default = "v1.11.3"
 }
-
 variable "kubernetes_version" {
-  description = "Kubernetes version to install"
-  type        = string
-  default     = "1.34.1"
+  type    = string
+  default = "1.34.1"
 }
-
-variable "kubevip_tag" {
-  description = "kube-vip container tag"
-  type        = string
-  default     = "v0.8.0"
-}
-
 variable "cluster_name" {
-  description = "Talos cluster name"
-  type        = string
-  default     = "ringbell"
+  type    = string
+  default = "ringbell"
 }
-
 variable "bootstrap_ip" {
-  description = "The control-plane node IP to run Talos bootstrap against"
-  type        = string
-  default     = "192.168.2.21"
+  type    = string
+  default = "192.168.2.21"
 }
