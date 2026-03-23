@@ -1,0 +1,6 @@
+creation_rules:
+  - path_regex: '\.sops\.json$'
+    age: "age1hma9j2wmhx7rrpag9n897fa8u60rpgwdpaqg9rvyuqhw5w0jrvpsz8c4yr"
+  - path_regex: '\.sops\.ya?ml$'
+    age: "age1hma9j2wmhx7rrpag9n897fa8u60rpgwdpaqg9rvyuqhw5w0jrvpsz8c4yr"
+    encrypted_regex: "(?i)(secret|key|token|password|credential|ca|crt|certificate)"
