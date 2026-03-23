@@ -39,7 +39,7 @@ wk_disk_gb   = 160 # worker root on NVMe
 wk_data_gb   = 180 # extra data disk on NVMe
 
 # Talos/Kubernetes
-talos_version      = "v1.11.3"
-kubernetes_version = "1.34.1"
+talos_version      = "v1.12.6"
+kubernetes_version = "1.35.0"
 cluster_name       = "ringbell"
 bootstrap_ip       = "192.168.2.21"
