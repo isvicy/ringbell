@@ -15,3 +15,7 @@ spec:
   timeout: 5m
   prune: true
   wait: true
+  postBuild:
+    substituteFrom:
+      - kind: ConfigMap
+        name: cluster-settings
