@@ -10,3 +10,4 @@ resources:
   - helm/rook-ceph.yaml
   - helm/nfs-subdir.yaml
   - helm/backube.yaml
+  - helm/synology-csi-talos.yaml

@@ -17,6 +17,7 @@ spec:
   wait: true
   dependsOn:
     - name: external-secrets-store
+    - name: snapshot-controller
   postBuild:
     substituteFrom:
       - kind: ConfigMap
