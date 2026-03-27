@@ -41,6 +41,12 @@ spec:
       network:
         provider: host
 
+      placement:
+        mon:
+          tolerations:
+            - key: node-role.kubernetes.io/control-plane
+              operator: Exists
+
       storage:
         useAllNodes: false
         useAllDevices: false
