@@ -30,7 +30,7 @@ spec:
 
       mon:
         count: 3
-        allowMultiplePerNode: true
+        allowMultiplePerNode: false
 
       mgr:
         count: 1
