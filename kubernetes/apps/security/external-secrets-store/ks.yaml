@@ -2,11 +2,11 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: cloudflared
+  name: external-secrets-store
   namespace: flux-system
 spec:
-  targetNamespace: networking
-  path: ./kubernetes/apps/networking/cloudflared/app
+  targetNamespace: security
+  path: ./kubernetes/apps/security/external-secrets-store/app
   sourceRef:
     kind: GitRepository
     name: flux-system
@@ -16,5 +16,4 @@ spec:
   prune: true
   wait: true
   dependsOn:
-    - name: cilium
-    - name: external-secrets-store
+    - name: external-secrets
