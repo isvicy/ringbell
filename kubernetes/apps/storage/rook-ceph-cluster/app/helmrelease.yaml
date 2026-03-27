@@ -1,0 +1,96 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: rook-ceph-cluster
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: rook-ceph-cluster
+      version: "1.16.5"
+      sourceRef:
+        kind: HelmRepository
+        name: rook-ceph
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  values:
+    operatorNamespace: storage
+
+    cephClusterSpec:
+      cephVersion:
+        image: quay.io/ceph/ceph:v19.2.2
+      dataDirHostPath: /var/lib/rook
+
+      mon:
+        count: 3
+        allowMultiplePerNode: true
+
+      mgr:
+        count: 1
+
+      dashboard:
+        enabled: true
+
+      network:
+        provider: host
+
+      storage:
+        useAllNodes: false
+        useAllDevices: false
+        nodes:
+          - name: w-01
+            devices:
+              - name: vdb
+          - name: w-02
+            devices:
+              - name: vdb
+
+      resources:
+        mon:
+          requests:
+            cpu: 250m
+            memory: 512Mi
+          limits:
+            memory: 1Gi
+        osd:
+          requests:
+            cpu: 250m
+            memory: 1Gi
+          limits:
+            memory: 2Gi
+        mgr:
+          requests:
+            cpu: 125m
+            memory: 256Mi
+          limits:
+            memory: 512Mi
+
+    cephBlockPools:
+      - name: ceph-blockpool
+        spec:
+          failureDomain: host
+          replicated:
+            size: 2
+        storageClass:
+          enabled: true
+          name: ceph-block
+          isDefault: false
+          reclaimPolicy: Retain
+          allowVolumeExpansion: true
+          parameters:
+            imageFormat: "2"
+            imageFeatures: layering
+
+    cephBlockPoolsVolumeSnapshotClass:
+      enabled: true
+      name: csi-ceph-blockpool
+
+    cephFileSystems: []
+    cephObjectStores: []

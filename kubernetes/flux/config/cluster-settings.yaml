@@ -1,0 +1,14 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-settings
+  namespace: flux-system
+data:
+  CLUSTER_NAME: ringbell
+  CLUSTER_DOMAIN: ringbell.cc
+  SYNOLOGY_IP: "192.168.50.177"
+  UNRAID_IP: "192.168.2.200"
+  UNRAID_NFS_PATH: /mnt/user/kubernetes
+  GARAGE_S3_ENDPOINT: "http://192.168.50.177:3900"
+  GARAGE_S3_BUCKET: homelab
