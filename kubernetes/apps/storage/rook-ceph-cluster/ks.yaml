@@ -17,3 +17,4 @@ spec:
   wait: false
   dependsOn:
     - name: rook-ceph
+    - name: snapshot-controller
