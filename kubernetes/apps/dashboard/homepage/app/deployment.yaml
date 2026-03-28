@@ -28,6 +28,9 @@ spec:
             httpGet:
               path: /api/healthcheck
               port: http
+              httpHeaders:
+                - name: Host
+                  value: homepage.ringbell.cc
             initialDelaySeconds: 10
             periodSeconds: 10
           resources:
