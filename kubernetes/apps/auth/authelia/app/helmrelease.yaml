@@ -159,6 +159,27 @@ spec:
                 - code
               userinfo_signed_response_alg: none
               token_endpoint_auth_method: client_secret_basic
+            - client_id: harbor
+              client_name: Harbor
+              client_secret: '$pbkdf2-sha512$310000$wbJQp2.y93biyyZ8un8fgw$T0a4KCBqwpqAwJtLb03nBQI568/GmDkH8Wm2wLay4iAL7koImwgKw0Qn9XLmWgzvYwtBNcXy8sUys./DfE11xg'
+              public: false
+              authorization_policy: one_factor
+              claims_policy: grafana
+              require_pkce: false
+              redirect_uris:
+                - https://harbor.ringbell.cc/c/oidc/callback
+              scopes:
+                - openid
+                - profile
+                - email
+                - groups
+              grant_types:
+                - authorization_code
+                - refresh_token
+              response_types:
+                - code
+              userinfo_signed_response_alg: none
+              token_endpoint_auth_method: client_secret_basic
 
       access_control:
         default_policy: one_factor

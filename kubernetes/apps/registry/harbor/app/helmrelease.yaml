@@ -1,0 +1,76 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: harbor
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: harbor
+      version: "1.18.3"
+      sourceRef:
+        kind: HelmRepository
+        name: harbor
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  values:
+    expose:
+      type: clusterIP
+      tls:
+        enabled: false
+      clusterIP:
+        name: harbor
+        ports:
+          httpPort: 80
+
+    externalURL: https://harbor.ringbell.cc
+
+    existingSecretAdminPassword: harbor-secret
+    existingSecretAdminPasswordKey: HARBOR_ADMIN_PASSWORD
+    existingSecretSecretKey: harbor-secret
+
+    persistence:
+      enabled: true
+      resourcePolicy: "keep"
+      persistentVolumeClaim:
+        registry:
+          storageClass: ceph-bulk
+          size: 50Gi
+        database:
+          storageClass: ceph-block
+          size: 2Gi
+        redis:
+          storageClass: ceph-block
+          size: 1Gi
+        jobservice:
+          jobLog:
+            storageClass: ceph-block
+            size: 1Gi
+        trivy:
+          storageClass: ceph-block
+          size: 5Gi
+
+    core:
+      extraEnvVars:
+        - name: CONFIG_OVERWRITE_JSON
+          valueFrom:
+            secretKeyRef:
+              name: harbor-secret
+              key: CONFIG_OVERWRITE_JSON
+
+    logLevel: info
+
+    trivy:
+      enabled: true
+
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true

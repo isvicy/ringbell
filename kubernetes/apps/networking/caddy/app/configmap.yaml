@@ -24,3 +24,14 @@ data:
       }
       reverse_proxy homepage.dashboard.svc.cluster.local:3000
     }
+
+    http://harbor-tunnel.ringbell.cc {
+      @docker path /v2/* /service/*
+      reverse_proxy @docker harbor.registry.svc.cluster.local:80
+
+      forward_auth authelia.auth.svc.cluster.local:80 {
+        uri /api/authz/forward-auth
+        copy_headers Remote-User Remote-Groups Remote-Email Remote-Name
+      }
+      reverse_proxy harbor.registry.svc.cluster.local:80
+    }

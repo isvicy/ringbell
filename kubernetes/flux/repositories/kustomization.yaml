@@ -14,4 +14,5 @@ resources:
   - helm/spegel.yaml
   - helm/prometheus-community.yaml
   - helm/authelia.yaml
+  - helm/harbor.yaml
   - helm/metrics-server.yaml
