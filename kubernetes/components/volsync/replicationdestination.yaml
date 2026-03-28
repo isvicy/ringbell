@@ -1,0 +1,20 @@
+---
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationDestination
+metadata:
+  name: ${APP}
+spec:
+  trigger:
+    manual: restore-once
+  restic:
+    repository: ${APP}-volsync-restic
+    copyMethod: Snapshot
+    volumeSnapshotClassName: csi-ceph-blockpool
+    storageClassName: ${VOLSYNC_STORAGECLASS:-ceph-block}
+    accessModes: ["ReadWriteOnce"]
+    capacity: ${VOLSYNC_CAPACITY:-5Gi}
+    cacheStorageClassName: ${VOLSYNC_CACHE_STORAGECLASS:-ceph-block}
+    cacheCapacity: ${VOLSYNC_CACHE_CAPACITY:-2Gi}
+    enableFileDeletion: true
+    cleanupCachePVC: true
+    cleanupTempPVC: true
