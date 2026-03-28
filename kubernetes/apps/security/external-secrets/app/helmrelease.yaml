@@ -13,7 +13,20 @@ spec:
         kind: HelmRepository
         name: external-secrets
         namespace: flux-system
+  install:
+    crds: Skip
+    remediation:
+      retries: 3
+  upgrade:
+    crds: Skip
+    cleanupOnFail: true
+    remediation:
+      retries: 3
   values:
-    installCRDs: true
+    installCRDs: false
+    crds:
+      createClusterExternalSecret: true
+      createClusterSecretStore: true
+      createPushSecret: true
     webhook:
       port: 9443

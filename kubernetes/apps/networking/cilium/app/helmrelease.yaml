@@ -50,6 +50,7 @@ spec:
       enabled: true
       serviceMonitor:
         enabled: true
+        trustCRDsExist: true
 
     operator:
       replicas: 1
