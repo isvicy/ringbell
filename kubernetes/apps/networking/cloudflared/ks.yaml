@@ -16,5 +16,5 @@ spec:
   prune: true
   wait: true
   dependsOn:
-    - name: cilium
+    - name: gateways
     - name: external-secrets-store

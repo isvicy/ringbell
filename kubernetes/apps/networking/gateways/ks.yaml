@@ -2,11 +2,11 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: e2e-test
+  name: gateways
   namespace: flux-system
 spec:
-  targetNamespace: default
-  path: ./kubernetes/apps/default/e2e-test/app
+  targetNamespace: networking
+  path: ./kubernetes/apps/networking/gateways/app
   sourceRef:
     kind: GitRepository
     name: flux-system
@@ -16,8 +16,5 @@ spec:
   prune: true
   wait: true
   dependsOn:
-    - name: rook-ceph-cluster
-    - name: nfs-provisioner
-    - name: synology-csi
-    - name: gateways
-    - name: external-dns
+    - name: cilium
+    - name: cert-manager-issuers

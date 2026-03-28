@@ -7,7 +7,7 @@ spec:
   hostnames:
     - grafana.ringbell.cc
   parentRefs:
-    - name: external
+    - name: internal
       namespace: networking
   rules:
     - backendRefs:
@@ -22,7 +22,7 @@ spec:
   hostnames:
     - prometheus.ringbell.cc
   parentRefs:
-    - name: external
+    - name: internal
       namespace: networking
   rules:
     - backendRefs:

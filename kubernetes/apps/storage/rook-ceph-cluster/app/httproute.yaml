@@ -7,7 +7,7 @@ spec:
   hostnames:
     - ceph.ringbell.cc
   parentRefs:
-    - name: external
+    - name: internal
       namespace: networking
   rules:
     - backendRefs:
