@@ -12,11 +12,13 @@ kubernetes/
 │   └── repositories/helm/  # HelmRepository sources
 ├── apps/                   # All workloads, organized by namespace
 │   ├── security/           # 1Password Connect, External Secrets 2.2.0, ClusterSecretStore
-│   ├── networking/         # Cilium, Gateway API, cloudflared, external-dns
+│   ├── networking/         # Cilium, Gateway API, cloudflared, external-dns, Caddy auth proxy
+│   ├── auth/               # Authelia (forward-auth SSO, SQLite on ceph-block)
 │   ├── cert-manager/       # cert-manager + ClusterIssuers + wildcard cert (*.ringbell.cc)
+│   ├── dashboard/          # Homepage (K8s service discovery, cluster widgets)
 │   ├── storage/            # Rook-Ceph (+ toolbox + dashboard), NFS, Synology CSI, snapshots
 │   ├── backup/             # Volsync (backup + restore)
-│   ├── kube-system/        # Spegel OCI registry mirror
+│   ├── kube-system/        # Spegel OCI registry mirror, metrics-server
 │   ├── observability/      # kube-prometheus-stack (Prometheus, Grafana, Alertmanager)
 │   ├── flux-system/        # PriorityClasses
 │   └── default/            # E2E test workload
@@ -44,7 +46,14 @@ onepassword-connect
 
 gateway-api ─> cilium ─> cloudflared
 cert-manager ─> cert-manager-issuers
+
+gateways + external-secrets-store + rook-ceph-cluster ─> authelia
+  ├─> caddy (auth proxy, forward_auth → Authelia)
+  └─> homepage (depends on gateways + authelia)
+
 rook-ceph + snapshot-controller ─> rook-ceph-cluster ─> kube-prometheus-stack
+
+metrics-server, spegel (no deps)
 ```
 
 ## Bootstrap (from scratch)
@@ -139,7 +148,16 @@ spec:
 
 ### Gateway
 
-Cilium Gateway `external` in `networking` namespace, HTTP:80 + HTTPS:443 (wildcard cert `*.ringbell.cc`), LB IP `192.168.2.30` via L2 announcements (pool: 192.168.2.30-39).
+Cilium Gateway `internal` in `networking` namespace, HTTP:80 + HTTPS:443 (wildcard cert `*.ringbell.cc`), LB IP `192.168.2.30` via L2 announcements (pool: 192.168.2.30-39).
+
+### Hostname Convention
+
+DNS A records and proxied CNAMEs can't coexist on the same hostname. To support both LAN and tunnel access, services use separate hostnames:
+
+| Access | Hostname | DNS Record |
+|--------|----------|------------|
+| LAN | `<name>.ringbell.cc` | DNS-only A → 192.168.2.30 (via external-dns) |
+| Tunnel | `<name>-tunnel.ringbell.cc` | Proxied CNAME → tunnel (via Cloudflare API) |
 
 ### LAN Access (default)
 
@@ -153,7 +171,7 @@ metadata:
 spec:
   hostnames: ["myapp.ringbell.cc"]
   parentRefs:
-    - name: external
+    - name: internal
       namespace: networking
   rules:
     - backendRefs:
@@ -163,7 +181,11 @@ spec:
 
 ### Internet Access (via Cloudflare Tunnel)
 
-The HTTPRoute above handles gateway routing. For internet exposure, create a proxied CNAME via Cloudflare API:
+Tunnel-exposed services are authenticated by Authelia (see [Authentication](#authentication) below). Cloudflared routes all `*.ringbell.cc` tunnel traffic to Caddy, which enforces `forward_auth` before proxying to backends.
+
+Traffic flow: Internet → Cloudflare edge → tunnel → cloudflared → Caddy (`forward_auth` → Authelia) → backend Service
+
+To expose a service via tunnel, add a proxied CNAME via Cloudflare API and a backend entry in Caddy's Caddyfile:
 
 ```bash
 CF_TOKEN=$(kubectl -n networking get secret cloudflare-api-token \
@@ -171,13 +193,32 @@ CF_TOKEN=$(kubectl -n networking get secret cloudflare-api-token \
 
 curl -X POST "https://api.cloudflare.com/client/v4/zones/47902d03701ff7e82f7c14a124f34a6f/dns_records" \
   -H "Authorization: Bearer ${CF_TOKEN}" -H "Content-Type: application/json" \
-  -d '{"type":"CNAME","name":"myapp.ringbell.cc",
+  -d '{"type":"CNAME","name":"myapp-tunnel.ringbell.cc",
        "content":"632934dd-f7ca-456e-92eb-dacfb5043624.cfargotunnel.com","proxied":true}'
 ```
 
-Traffic flow: Internet -> Cloudflare edge -> tunnel -> cloudflared pod -> cilium-gateway-external -> HTTPRoute -> Service
+## Authentication
 
-> **Note:** external-dns creates A records for ALL HTTPRoute hostnames. A CNAME and A record can't coexist. Delete the external-dns A record before creating a tunnel CNAME, or don't create the HTTPRoute until the CNAME is in place. For a cleaner setup, consider dual external-dns instances with `--gateway-label-filter`.
+Tunnel-exposed services are protected by [Authelia](https://www.authelia.com/) forward-auth. LAN access is unauthenticated.
+
+```
+┌──────────┐     ┌──────────┐  forward_auth  ┌──────────┐
+│cloudflared├────►│  Caddy   ├───────────────►│ Authelia  │
+└──────────┘     └────┬─────┘                 └──────────┘
+                      │ (authed)
+                      ▼
+                  ┌──────────┐
+                  │ Backend  │
+                  └──────────┘
+```
+
+- **Authelia** (`auth` ns): File-based user store, TOTP 2FA, SQLite session/storage on `ceph-block`. Secrets from 1Password via ExternalSecret.
+- **Caddy** (`networking` ns): Auth proxy with `forward_auth` directive (6 lines per backend). Cloudflared routes `*.ringbell.cc` to Caddy. Config auto-reloads via `--watch`.
+- **Homepage** (`dashboard` ns): Unified dashboard with K8s service discovery and cluster widgets (CPU/memory via metrics-server).
+
+### Why Caddy, not CiliumEnvoyConfig?
+
+CiliumEnvoyConfig cannot inject filters into Gateway API proxies (cilium/cilium#26941). Caddy `forward_auth` is proven and simple.
 
 ## Backups (Volsync)
 
@@ -290,3 +331,6 @@ See `docs/troubleshooting.md` for full details (13 issues). Top ones:
 8. **Rook-Ceph SC parameters** — custom `parameters` replaces chart defaults; must include `csi.storage.k8s.io/*` refs
 9. **Prometheus must NOT use NFS** — causes WAL corruption; use `ceph-block`
 10. **ServiceMonitor before Prometheus** — add `trustCRDsExist: true` to any chart enabling ServiceMonitors
+11. **CiliumEnvoyConfig can't inject into Gateway API** — cilium/cilium#26941; use Caddy `forward_auth` for auth
+12. **Authelia chart secret keys use dot-paths** — e.g. `identity_validation.reset_password.jwt.hmac.key`, not `JWT_TOKEN`. Always `helm show values` first.
+13. **Homepage needs writable `/app/config`** — ConfigMap is read-only; use emptyDir + init-container copy pattern

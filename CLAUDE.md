@@ -67,7 +67,7 @@ kubernetes/         # Flux-managed GitOps manifests
   bootstrap/flux/   # Flux bootstrap (gotk-components, gotk-sync)
   flux/config/      # Cluster-level Flux Kustomizations + settings ConfigMap
   flux/repositories/# HelmRepository sources
-  apps/             # All workloads by namespace (security, networking, storage, etc.)
+  apps/             # All workloads by namespace (auth, dashboard, networking, security, storage, etc.)
   components/       # Reusable kustomize components (volsync)
 .sops.yaml          # SOPS encryption rules (age backend)
 ```
@@ -96,9 +96,12 @@ Each app follows `kubernetes/apps/<namespace>/<app-name>/`:
 - `synology-iscsi`: NAS-protected data (RWO, WaitForFirstConsumer)
 
 ### Networking
-- LAN access: HTTPRoute -> external-dns creates DNS-only A record -> gateway 192.168.2.30
-- Internet access: Proxied CNAME to tunnel via Cloudflare API (not external-dns, due to A/CNAME conflict)
+- Hostname convention: `<name>.ringbell.cc` (LAN, A record) / `<name>-tunnel.ringbell.cc` (tunnel, proxied CNAME)
+- LAN access: HTTPRoute → external-dns creates DNS-only A record → gateway `internal` at 192.168.2.30
+- Internet access: Proxied CNAME → cloudflared → Caddy (`forward_auth` → Authelia) → backend
+- Cloudflared routes all `*.ringbell.cc` tunnel traffic to Caddy (static config)
 - Cloudflared uses `--protocol http2` (QUIC blocked in home network)
+- CiliumEnvoyConfig CANNOT inject auth into Gateway API (cilium/cilium#26941) — use Caddy forward_auth instead
 
 ### Commits
 Conventional commits enforced via commitlint: `type(scope): message`
@@ -110,3 +113,5 @@ See `kubernetes/README.md` Gotchas section for the full list. Top issues:
 2. StorageClass parameters are immutable — delete and recreate
 3. Gateway API needs experimental CRDs for Cilium (TLSRoute)
 4. `storage` namespace needs `pod-security.kubernetes.io/enforce: privileged`
+5. CiliumEnvoyConfig cannot inject filters into Gateway API proxies — use Caddy `forward_auth` for auth
+6. Always `helm show values` before writing a HelmRelease — chart schemas are not guessable
