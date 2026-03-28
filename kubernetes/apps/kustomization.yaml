@@ -10,3 +10,4 @@ resources:
   - backup
   - default
   - kube-system
+  - observability
