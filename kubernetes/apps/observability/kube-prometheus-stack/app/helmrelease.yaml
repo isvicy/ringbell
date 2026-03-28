@@ -86,7 +86,7 @@ spec:
           auth_url: https://auth.ringbell.cc/api/oidc/authorization
           token_url: https://auth.ringbell.cc/api/oidc/token
           api_url: https://auth.ringbell.cc/api/oidc/userinfo
-          login_attribute_path: preferred_username
+          login_attribute_path: email
           name_attribute_path: name
           email_attribute_path: email
           groups_attribute_path: groups
