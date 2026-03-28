@@ -1,0 +1,68 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumEnvoyConfig
+metadata:
+  name: authelia-extauthz
+spec:
+  services:
+    - name: cilium-gateway-external-auth
+      namespace: networking
+  resources:
+    - "@type": type.googleapis.com/envoy.config.cluster.v3.Cluster
+      name: authelia_extauthz
+      connect_timeout: 1s
+      type: STRICT_DNS
+      load_assignment:
+        cluster_name: authelia_extauthz
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: authelia.auth.svc.cluster.local
+                      port_value: 9091
+    - "@type": type.googleapis.com/envoy.config.listener.v3.Listener
+      name: listener
+      filter_chains:
+        - filters:
+            - name: envoy.filters.network.http_connection_manager
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                stat_prefix: authelia_extauthz
+                route_config:
+                  virtual_hosts:
+                    - name: local
+                      domains: ["*"]
+                      routes:
+                        - match:
+                            prefix: "/"
+                          route:
+                            cluster: authelia_extauthz
+                http_filters:
+                  - name: envoy.filters.http.ext_authz
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.ext_authz.v3.ExtAuthz
+                      transport_api_version: V3
+                      http_service:
+                        server_uri:
+                          uri: http://authelia.auth.svc.cluster.local:9091
+                          cluster: authelia_extauthz
+                          timeout: 10s
+                        path_prefix: /api/authz/ext-authz/
+                        authorization_request:
+                          allowed_headers:
+                            patterns:
+                              - exact: accept
+                              - exact: cookie
+                              - exact: proxy-authorization
+                              - prefix: x-forwarded-
+                        authorization_response:
+                          allowed_upstream_headers:
+                            patterns:
+                              - exact: set-cookie
+                              - prefix: remote-
+                              - prefix: authelia-
+                      failure_mode_allow: false
+                  - name: envoy.filters.http.router
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
