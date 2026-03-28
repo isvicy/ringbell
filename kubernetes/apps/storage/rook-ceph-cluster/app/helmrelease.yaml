@@ -75,9 +75,9 @@ spec:
         mgr:
           requests:
             cpu: 125m
-            memory: 256Mi
-          limits:
             memory: 512Mi
+          limits:
+            memory: 1Gi
 
     cephBlockPools:
       - name: ceph-blockpool
