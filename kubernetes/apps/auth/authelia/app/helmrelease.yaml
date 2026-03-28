@@ -167,7 +167,7 @@ spec:
               claims_policy: grafana
               require_pkce: false
               redirect_uris:
-                - https://harbor.ringbell.cc/c/oidc/callback
+                - https://harbor-tunnel.ringbell.cc/c/oidc/callback
               scopes:
                 - openid
                 - profile
