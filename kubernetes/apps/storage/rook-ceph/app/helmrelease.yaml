@@ -27,4 +27,4 @@ spec:
       enableRbdDriver: true
       enableCephfsDriver: false
     monitoring:
-      enabled: false
+      enabled: true

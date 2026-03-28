@@ -37,6 +37,7 @@ spec:
 
       dashboard:
         enabled: true
+        ssl: false
 
       network:
         provider: host
@@ -92,7 +93,8 @@ spec:
           allowVolumeExpansion: true
           parameters:
             imageFormat: "2"
-            imageFeatures: layering
+            imageFeatures: layering,exclusive-lock,object-map,fast-diff,deep-flatten
+            csi.storage.k8s.io/fstype: ext4
             csi.storage.k8s.io/provisioner-secret-name: rook-csi-rbd-provisioner
             csi.storage.k8s.io/provisioner-secret-namespace: storage
             csi.storage.k8s.io/controller-expand-secret-name: rook-csi-rbd-provisioner
@@ -103,6 +105,9 @@ spec:
     cephBlockPoolsVolumeSnapshotClass:
       enabled: true
       name: csi-ceph-blockpool
+
+    toolbox:
+      enabled: true
 
     cephFileSystems: []
     cephObjectStores: []
