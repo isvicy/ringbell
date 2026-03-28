@@ -4,4 +4,5 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - grafana-host/ks.yaml
+  - hubble-ui/ks.yaml
   - kube-prometheus-stack/ks.yaml
