@@ -8,6 +8,9 @@ data:
     {
       auto_https off
       order forward_auth before reverse_proxy
+      servers {
+        trusted_proxies static private_ranges
+      }
     }
 
     http://auth.ringbell.cc {
