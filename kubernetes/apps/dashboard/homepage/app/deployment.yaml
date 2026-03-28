@@ -32,14 +32,14 @@ spec:
               name: http
           env:
             - name: HOMEPAGE_ALLOWED_HOSTS
-              value: "homepage.ringbell.cc"
+              value: "home.ringbell.cc,home-tunnel.ringbell.cc"
           livenessProbe:
             httpGet:
               path: /api/healthcheck
               port: http
               httpHeaders:
                 - name: Host
-                  value: homepage.ringbell.cc
+                  value: home.ringbell.cc
             initialDelaySeconds: 10
             periodSeconds: 10
           resources:

@@ -5,7 +5,7 @@ metadata:
   name: homepage
 spec:
   hostnames:
-    - homepage.ringbell.cc
+    - home.ringbell.cc
   parentRefs:
     - name: internal
       namespace: networking
