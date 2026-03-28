@@ -11,31 +11,40 @@ kubernetes/
 │   ├── config/             # Cluster-level Flux Kustomizations + cluster-settings ConfigMap
 │   └── repositories/helm/  # HelmRepository sources
 ├── apps/                   # All workloads, organized by namespace
-│   ├── security/           # 1Password Connect, External Secrets, ClusterSecretStore
+│   ├── security/           # 1Password Connect, External Secrets 2.2.0, ClusterSecretStore
 │   ├── networking/         # Cilium, Gateway API, cloudflared, external-dns
-│   ├── cert-manager/       # cert-manager + ClusterIssuers (Let's Encrypt DNS-01)
-│   ├── storage/            # Rook-Ceph, NFS provisioner, Synology CSI, snapshot-controller
-│   ├── backup/             # Volsync
+│   ├── cert-manager/       # cert-manager + ClusterIssuers + wildcard cert (*.ringbell.cc)
+│   ├── storage/            # Rook-Ceph (+ toolbox + dashboard), NFS, Synology CSI, snapshots
+│   ├── backup/             # Volsync (backup + restore)
+│   ├── kube-system/        # Spegel OCI registry mirror
+│   ├── observability/      # kube-prometheus-stack (Prometheus, Grafana, Alertmanager)
 │   ├── flux-system/        # PriorityClasses
 │   └── default/            # E2E test workload
-└── components/
-    └── volsync/            # Reusable kustomize component for app backup opt-in
+├── components/
+│   └── volsync/            # Reusable kustomize component (backup + restore + PVC)
+└── docs/
+    ├── best-practices.md   # Component comparison with reference homelab
+    └── troubleshooting.md  # 13 issues with root cause, fix, prevention
 ```
 
 ### Flux Dependency Graph
 
 ```
-priority-classes
+priority-classes, spegel, nfs-provisioner (no deps)
+
 onepassword-connect
   └─> external-secrets
-        └─> external-secrets-store
-              ├─> gateway-api ─> cilium ─> cloudflared
-              ├─> cert-manager ─> cert-manager-issuers
+        └─> external-secrets-store (bottleneck: 6 consumers)
+              ├─> cert-manager-issuers
+              ├─> cloudflared (also depends on cilium)
               ├─> external-dns
-              ├─> nfs-provisioner
-              ├─> synology-csi (+ snapshot-controller)
-              ├─> rook-ceph ─> rook-ceph-cluster
-              └─> volsync
+              ├─> synology-csi (also depends on snapshot-controller)
+              ├─> volsync
+              └─> (indirectly → e2e-test)
+
+gateway-api ─> cilium ─> cloudflared
+cert-manager ─> cert-manager-issuers
+rook-ceph + snapshot-controller ─> rook-ceph-cluster ─> kube-prometheus-stack
 ```
 
 ## Bootstrap (from scratch)
@@ -73,7 +82,7 @@ pass show age/identity | kubectl create secret generic sops-age \
 # 4. Verify
 flux get ks -A                              # all Ready
 kubectl get cephcluster -n storage          # HEALTH_OK
-kubectl get hr -A                           # 10 HelmReleases Ready
+kubectl get hr -A                           # 12 HelmReleases Ready
 ```
 
 ### Talos Upgrade (rolling)
@@ -89,9 +98,7 @@ for ip in 192.168.2.21 192.168.2.22 192.168.2.23; do
 done
 
 # Set Ceph noout before worker upgrades
-kubectl -n storage exec deploy/rook-ceph-operator -- ceph osd set noout \
-  --conf=/var/lib/rook/storage/storage.config \
-  --keyring=/var/lib/rook/storage/client.admin.keyring
+kubectl -n storage exec deploy/rook-ceph-tools -- ceph osd set noout
 
 # Workers one at a time, wait for OSD recovery between each
 for ip in 192.168.2.24 192.168.2.25; do
@@ -100,9 +107,7 @@ for ip in 192.168.2.24 192.168.2.25; do
 done
 
 # Unset noout
-kubectl -n storage exec deploy/rook-ceph-operator -- ceph osd unset noout \
-  --conf=/var/lib/rook/storage/storage.config \
-  --keyring=/var/lib/rook/storage/client.admin.keyring
+kubectl -n storage exec deploy/rook-ceph-tools -- ceph osd unset noout
 ```
 
 ## Storage
@@ -134,7 +139,7 @@ spec:
 
 ### Gateway
 
-Cilium Gateway `external` in `networking` namespace, HTTP port 80, LB IP `192.168.2.30` via L2 announcements (pool: 192.168.2.30-39).
+Cilium Gateway `external` in `networking` namespace, HTTP:80 + HTTPS:443 (wildcard cert `*.ringbell.cc`), LB IP `192.168.2.30` via L2 announcements (pool: 192.168.2.30-39).
 
 ### LAN Access (default)
 
@@ -208,47 +213,33 @@ spec:
 ```
 
 This creates:
-- **ExternalSecret** pulling restic + S3 creds from 1Password (`volsync-restic` item)
-- **ReplicationSource** backing up PVC `myapp` every 6 hours, retaining 7 daily / 4 weekly / 3 monthly
+- **ReplicationSource** — scheduled backup every 6h (retain 7 daily / 4 weekly / 3 monthly)
+- **ReplicationDestination** — manual restore trigger
+- **ExternalSecret** — restic + S3 creds from 1Password (`volsync-restic` item)
+- **PVC** — with `dataSourceRef` pointing to ReplicationDestination (auto-restore on fresh cluster)
 
 ### Manual Snapshot
 
 ```bash
-# Trigger immediate backup
 kubectl -n <namespace> annotate replicationsource <app>-backup --overwrite \
   volsync.backube/trigger=$(date +%s)
 ```
 
-### Disaster Recovery Restore
+### Restore
 
 ```bash
-# 1. Scale down the app
-kubectl -n <namespace> scale deploy/<app> --replicas=0
+# 1. Scale down
+kubectl -n <ns> scale deploy/<app> --replicas=0
 
-# 2. Create ReplicationDestination for restore
-cat <<EOF | kubectl apply -f -
-apiVersion: volsync.backube/v1alpha1
-kind: ReplicationDestination
-metadata:
-  name: <app>-restore
-  namespace: <namespace>
-spec:
-  trigger:
-    manual: restore-once
-  restic:
-    repository: <app>-volsync-restic
-    destinationPVC: <app>
-    copyMethod: Direct
-    storageClassName: ceph-block
-    capacity: <same-as-original>
-EOF
+# 2. Trigger restore
+kubectl -n <ns> patch replicationdestination <app> \
+  --type merge -p '{"spec":{"trigger":{"manual":"restore-'$(date +%s)'"}}}'
 
-# 3. Wait for restore to complete
-kubectl -n <namespace> get replicationdestination <app>-restore -w
+# 3. Wait for completion
+kubectl -n <ns> get replicationdestination <app> -w
 
-# 4. Clean up and restart
-kubectl -n <namespace> delete replicationdestination <app>-restore
-kubectl -n <namespace> scale deploy/<app> --replicas=1
+# 4. Scale up
+kubectl -n <ns> scale deploy/<app> --replicas=1
 ```
 
 ## Secrets
@@ -267,7 +258,7 @@ Bootstrap chicken-and-egg: 1Password Connect credentials are SOPS-encrypted in g
 ### Example: ExternalSecret
 
 ```yaml
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: myapp-secret
@@ -287,10 +278,15 @@ spec:
 
 ## Gotchas
 
-1. **postBuild.substituteFrom is NOT inherited** — every ks.yaml using `${}` variables needs its own `postBuild` block
-2. **Split CRD install from CR creation** — operator HelmRelease and its CRs must be in separate Flux Kustomizations with `dependsOn`
-3. **Rook-Ceph SC parameters** — custom `parameters` block in HelmRelease values replaces chart defaults; must explicitly include `csi.storage.k8s.io/*` secret refs
-4. **StorageClass is immutable** — delete SC before updating parameters, then suspend/resume HelmRelease
-5. **Storage namespace needs privileged PodSecurity** — label with `pod-security.kubernetes.io/enforce: privileged`
-6. **Gateway API experimental CRDs** — Cilium needs TLSRoute (experimental channel only); restart cilium-operator after CRD install
-7. **Cloudflared needs `--protocol http2`** — QUIC (UDP 7844) is commonly blocked in home networks
+See `docs/troubleshooting.md` for full details (13 issues). Top ones:
+
+1. **Never jump 15+ chart versions** — ESO 0.14→2.2 caused hours of cascading failures. Upgrade incrementally.
+2. **Restart kustomize-controller after CRD changes** — `kubectl -n flux-system rollout restart deploy/kustomize-controller`
+3. **StorageClass params are immutable** — delete SC, suspend/resume HR to recreate
+4. **Privileged PodSecurity** needed for `storage`, `observability`, `kube-system` namespaces
+5. **Cilium needs experimental Gateway API CRDs** — standard channel lacks TLSRoute
+6. **Cloudflared needs `--protocol http2`** — QUIC blocked in most home networks
+7. **`wait: false` for cluster-scoped resources** — Flux can't health-check ClusterSecretStore with `targetNamespace`
+8. **Rook-Ceph SC parameters** — custom `parameters` replaces chart defaults; must include `csi.storage.k8s.io/*` refs
+9. **Prometheus must NOT use NFS** — causes WAL corruption; use `ceph-block`
+10. **ServiceMonitor before Prometheus** — add `trustCRDsExist: true` to any chart enabling ServiceMonitors
