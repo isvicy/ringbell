@@ -36,7 +36,13 @@ cp_disk_gb   = 80
 wk_vcpu      = 8
 wk_memory_mb = 32768
 wk_disk_gb   = 160 # worker root on NVMe
-wk_data_gb   = 180 # extra data disk on NVMe
+wk_data_gb     = 180  # extra data disk on NVMe
+wk_hdd_data_gb = 4096 # HDD-backed bulk storage disk
+
+hdd_pools = {
+  w-01 = { name = "talos-hdd1", path = "/mnt/disk1/domains/talos-hdd" }
+  w-02 = { name = "talos-hdd2", path = "/mnt/disk2/domains/talos-hdd" }
+}
 
 # Talos/Kubernetes
 talos_version      = "v1.12.6"

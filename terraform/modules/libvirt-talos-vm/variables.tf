@@ -12,3 +12,13 @@ variable "extra_data_size_gb" {
   type    = number
   default = 0
 }
+
+variable "extra_data2_size_gb" {
+  type    = number
+  default = 0
+}
+
+variable "extra_data2_pool_name" {
+  type    = string
+  default = ""
+}

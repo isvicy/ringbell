@@ -117,6 +117,19 @@ variable "wk_data_gb" {
   type    = number
   default = 180
 }
+variable "wk_hdd_data_gb" {
+  type    = number
+  default = 0
+}
+
+variable "hdd_pools" {
+  description = "Per-worker HDD pool config (separate physical disks for I/O isolation)"
+  type = map(object({
+    name = string
+    path = string
+  }))
+  default = {}
+}
 
 # ---------- Talos / Kubernetes ----------
 variable "talos_version" {

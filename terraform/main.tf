@@ -13,6 +13,14 @@ resource "libvirt_pool" "wk" {
   target { path = var.wk_pool_path }
 }
 
+# ---------- HDD pools (one per worker, separate physical disks for I/O isolation) ----------
+resource "libvirt_pool" "hdd" {
+  for_each = var.hdd_pools
+  name     = each.value.name
+  type     = "dir"
+  target { path = each.value.path }
+}
+
 # ---------- Base Talos images (one per pool) ----------
 resource "libvirt_volume" "talos_base_ssd" {
   name   = "talos-base.qcow2"
@@ -62,6 +70,10 @@ module "workers" {
 
   # add a fast extra data disk (e.g. 180GB) on each worker
   extra_data_size_gb = var.wk_data_gb
+
+  # HDD-backed data disk for bulk Ceph storage
+  extra_data2_size_gb   = var.wk_hdd_data_gb
+  extra_data2_pool_name = libvirt_pool.hdd[each.key].name
 }
 
 output "dhcp_reservations" {

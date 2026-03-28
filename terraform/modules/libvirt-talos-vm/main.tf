@@ -13,6 +13,13 @@ resource "libvirt_volume" "data" {
   size  = var.extra_data_size_gb * 1024 * 1024 * 1024
 }
 
+resource "libvirt_volume" "data2" {
+  count = var.extra_data2_size_gb > 0 ? 1 : 0
+  name  = "${var.name}-data2.qcow2"
+  pool  = var.extra_data2_pool_name
+  size  = var.extra_data2_size_gb * 1024 * 1024 * 1024
+}
+
 resource "libvirt_domain" "vm" {
   name   = var.name
   vcpu   = var.vcpu
@@ -37,6 +44,13 @@ resource "libvirt_domain" "vm" {
     content {
       volume_id = libvirt_volume.data[0].id
     }
+  }
+
+  # data2 disk is attached via virsh (not Terraform) to avoid VM recreation
+  # See: virsh attach-disk <vm> <path> vdc --persistent
+
+  lifecycle {
+    ignore_changes = [disk]
   }
 
   console {
