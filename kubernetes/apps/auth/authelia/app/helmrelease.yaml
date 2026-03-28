@@ -78,12 +78,12 @@ spec:
       storage:
         local:
           enabled: true
-          path: /data/db.sqlite3
+          path: /config/db.sqlite3
 
       notifier:
         filesystem:
           enabled: true
-          filename: /data/notification.txt
+          filename: /config/notification.txt
 
       access_control:
         default_policy: one_factor
