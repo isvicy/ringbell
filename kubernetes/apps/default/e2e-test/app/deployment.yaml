@@ -20,6 +20,8 @@ spec:
           volumeMounts:
             - name: ceph-block
               mountPath: /data/ceph-block
+            - name: ceph-bulk
+              mountPath: /data/ceph-bulk
             - name: nfs
               mountPath: /data/nfs
             - name: iscsi
@@ -58,6 +60,9 @@ spec:
             - name: ceph-block
               mountPath: /data/ceph-block
               readOnly: true
+            - name: ceph-bulk
+              mountPath: /data/ceph-bulk
+              readOnly: true
             - name: nfs
               mountPath: /data/nfs
               readOnly: true
@@ -75,6 +80,9 @@ spec:
         - name: ceph-block
           persistentVolumeClaim:
             claimName: e2e-ceph
+        - name: ceph-bulk
+          persistentVolumeClaim:
+            claimName: e2e-ceph-bulk
         - name: nfs
           persistentVolumeClaim:
             claimName: e2e-nfs

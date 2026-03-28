@@ -24,6 +24,17 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
+  name: e2e-ceph-bulk
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: ceph-bulk
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
   name: e2e-iscsi
 spec:
   accessModes: ["ReadWriteOnce"]
