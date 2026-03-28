@@ -7,7 +7,7 @@ spec:
   hostnames:
     - auth.ringbell.cc
   parentRefs:
-    - name: external-auth
+    - name: internal
       namespace: networking
   rules:
     - backendRefs:

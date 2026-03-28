@@ -1,0 +1,23 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: caddy-config
+data:
+  Caddyfile: |
+    {
+      auto_https off
+      order forward_auth before reverse_proxy
+    }
+
+    http://auth.ringbell.cc {
+      reverse_proxy authelia.auth.svc.cluster.local:80
+    }
+
+    http://homepage.ringbell.cc {
+      forward_auth authelia.auth.svc.cluster.local:80 {
+        uri /api/authz/forward-auth
+        copy_headers Remote-User Remote-Groups Remote-Email Remote-Name
+      }
+      reverse_proxy homepage.dashboard.svc.cluster.local:3000
+    }
