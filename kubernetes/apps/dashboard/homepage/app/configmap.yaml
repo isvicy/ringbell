@@ -15,7 +15,7 @@ data:
         columns: 3
       Monitoring:
         style: row
-        columns: 3
+        columns: 4
   bookmarks.yaml: ""
   services.yaml: |
     - Infrastructure:
@@ -27,6 +27,10 @@ data:
             href: https://auth.ringbell.cc
             description: Authentication Portal
             icon: authelia
+        - Harbor:
+            href: https://harbor.ringbell.cc
+            description: Container Registry
+            icon: harbor
     - Monitoring:
         - Grafana:
             href: https://grafana.ringbell.cc
@@ -40,6 +44,10 @@ data:
             href: https://prometheus.ringbell.cc
             description: Prometheus Metrics
             icon: prometheus
+        - Hubble:
+            href: https://hubble.ringbell.cc
+            description: Network Observability
+            icon: cilium
   widgets.yaml: |
     - kubernetes:
         cluster:
