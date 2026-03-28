@@ -4,6 +4,16 @@
 
 A homelab Kubernetes cluster managed by Flux CD GitOps, running on Talos Linux VMs (Unraid/libvirt KVM). Infrastructure provisioned via Terraform, workloads declared in `kubernetes/`.
 
+## Safety Rules
+
+**IMPORTANT — This is a live homelab cluster. Mistakes can cause data loss, downtime, or require a full rebuild.**
+
+- You MUST research before executing any operation you are not 100% confident about. If an operation touches Ceph, Talos upgrades, NFS exports, Synology configuration, node reboots, PV deletion, or any destructive action — you MUST first research the topic (web search, reference repos, upstream docs) to confirm the approach follows community best practices. Do NOT guess. Do NOT assume. Prove it first.
+- You MUST NOT run destructive commands (`kubectl delete pv`, `ceph osd destroy`, `talosctl reset`, `terraform destroy`, `rm -rf`) without explicit user approval AND having researched the consequences.
+- You MUST NOT print secrets, tokens, or credentials to stdout. Use them inline via `$(pass show ...)` or pipe directly into commands.
+- You MUST set Ceph `noout` flag before any worker node maintenance that takes OSDs offline.
+- You MUST upgrade Talos nodes one at a time, control planes first, workers second, verifying health between each.
+
 ## Reference Repositories
 
 These repos are added as working directories and should be consulted when setting up or troubleshooting components:
