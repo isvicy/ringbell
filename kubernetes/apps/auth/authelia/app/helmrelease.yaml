@@ -137,6 +137,28 @@ spec:
                 - code
               userinfo_signed_response_alg: none
               token_endpoint_auth_method: client_secret_basic
+            - client_id: grafana-host
+              client_name: Grafana Host
+              client_secret: '$pbkdf2-sha512$310000$bmXGmNSd24vkIao0D9IJdw$0grpzv9yxaA5Rfl50rKKNbsHiGZbhRfBH+cLiQS+3ExkLdKyvsqg1XPgKpe2THSr0h/NY08mkI+jHS9dFes+8Q'
+              public: false
+              authorization_policy: one_factor
+              claims_policy: grafana
+              require_pkce: true
+              pkce_challenge_method: S256
+              redirect_uris:
+                - https://grafana-host.ringbell.cc/login/generic_oauth
+              scopes:
+                - openid
+                - profile
+                - email
+                - groups
+              grant_types:
+                - authorization_code
+                - refresh_token
+              response_types:
+                - code
+              userinfo_signed_response_alg: none
+              token_endpoint_auth_method: client_secret_basic
 
       access_control:
         default_policy: one_factor
