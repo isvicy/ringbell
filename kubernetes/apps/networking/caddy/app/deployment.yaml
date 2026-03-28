@@ -24,6 +24,7 @@ spec:
             - run
             - --config
             - /etc/caddy/Caddyfile
+            - --watch
           livenessProbe:
             tcpSocket:
               port: http
