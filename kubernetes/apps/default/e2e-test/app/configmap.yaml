@@ -106,7 +106,6 @@ data:
     <table>
     <tr><th>Route</th><th>Hostname</th><th>Access</th></tr>
     <tr><td>LAN</td><td><a href="http://test-lan.ringbell.cc">test-lan.ringbell.cc</a></td><td>DNS-only A → 192.168.2.30 (LAN)</td></tr>
-    <tr><td>Tunnel</td><td><a href="http://test-public.ringbell.cc">test-public.ringbell.cc</a></td><td>Proxied CNAME → Cloudflare Tunnel (Internet)</td></tr>
     </table>
     <h2>Raw Files</h2>
     <ul>
