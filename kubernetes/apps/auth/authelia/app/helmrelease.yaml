@@ -139,7 +139,7 @@ spec:
               token_endpoint_auth_method: client_secret_basic
             - client_id: grafana-host
               client_name: Grafana Host
-              client_secret: '$pbkdf2-sha512$310000$bmXGmNSd24vkIao0D9IJdw$0grpzv9yxaA5Rfl50rKKNbsHiGZbhRfBH+cLiQS+3ExkLdKyvsqg1XPgKpe2THSr0h/NY08mkI+jHS9dFes+8Q'
+              client_secret: '$pbkdf2-sha512$310000$rukgYpUl7XblcxseKpIuoA$7ocG9FzWItCdgfGHh3zWYw7Fb9VVARxNYN.nfEGW3H4tdZkA3YlRryAviHu4elsUIvGrDMVoPMaElCp0QAoZWQ'
               public: false
               authorization_policy: one_factor
               claims_policy: grafana
