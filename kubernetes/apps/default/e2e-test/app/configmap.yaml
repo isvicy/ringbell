@@ -1,0 +1,112 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: e2e-test-config
+data:
+  default.conf: |
+    server {
+        listen 8080;
+        server_name _;
+        root /usr/share/nginx/html;
+        index index.html;
+
+        location / {
+            try_files $uri $uri/ =404;
+        }
+
+        location /healthz {
+            access_log off;
+            return 200 "ok\n";
+            add_header Content-Type text/plain;
+        }
+
+        location /storage/ceph-block/ {
+            alias /data/ceph-block/;
+            autoindex on;
+            add_header Content-Type text/plain;
+        }
+
+        location /storage/nfs/ {
+            alias /data/nfs/;
+            autoindex on;
+            add_header Content-Type text/plain;
+        }
+
+        location /storage/iscsi/ {
+            alias /data/iscsi/;
+            autoindex on;
+            add_header Content-Type text/plain;
+        }
+    }
+  init.sh: |
+    #!/bin/sh
+    set -eu
+    TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+    POD=$(hostname)
+
+    for backend in ceph-block nfs iscsi; do
+      dir="/data/${backend}"
+      if [ ! -f "${dir}/test.txt" ]; then
+        echo "[${TIMESTAMP}] first write by ${POD} - backend: ${backend}" > "${dir}/test.txt"
+        echo "STORAGE_OK" > "${dir}/health"
+        echo "${backend}: first init - wrote test data"
+      else
+        echo "${backend}: data persisted from previous run - $(cat "${dir}/test.txt")"
+      fi
+    done
+
+    cat > /usr/share/nginx/html/index.html <<EOHTML
+    <!DOCTYPE html>
+    <html>
+    <head><title>Homelab E2E Test</title>
+    <style>
+      body{font-family:monospace;background:#1a1a2e;color:#e0e0e0;padding:2rem}
+      h1{color:#4fc3f7}h2{color:#81d4fa}
+      .ok{color:#00ff41}.fail{color:#ff0041}
+      table{border-collapse:collapse;margin:1rem 0}
+      td,th{border:1px solid #333;padding:.5rem 1rem;text-align:left}
+      th{background:#16213e}a{color:#4fc3f7}
+    </style>
+    </head>
+    <body>
+    <h1>Homelab E2E Test</h1>
+    <p>Init: ${TIMESTAMP} | Pod: ${POD}</p>
+    <h2>Storage</h2>
+    <table>
+    <tr><th>Backend</th><th>StorageClass</th><th>Mode</th><th>Status</th><th>Data</th></tr>
+    EOHTML
+
+    for backend in ceph-block nfs iscsi; do
+      dir="/data/${backend}"
+      case "${backend}" in
+        ceph-block) sc="ceph-block"; mode="RWO" ;;
+        nfs)        sc="nfs-unraid"; mode="RWX" ;;
+        iscsi)      sc="synology-iscsi"; mode="RWO" ;;
+      esac
+      if [ -f "${dir}/health" ] && [ "$(cat "${dir}/health")" = "STORAGE_OK" ]; then
+        status='<span class="ok">OK</span>'
+      else
+        status='<span class="fail">FAIL</span>'
+      fi
+      data=$(cat "${dir}/test.txt" 2>/dev/null || echo "N/A")
+      echo "<tr><td>${backend}</td><td>${sc}</td><td>${mode}</td><td>${status}</td><td>${data}</td></tr>" >> /usr/share/nginx/html/index.html
+    done
+
+    cat >> /usr/share/nginx/html/index.html <<EOHTML
+    </table>
+    <h2>Networking</h2>
+    <table>
+    <tr><th>Route</th><th>Hostname</th><th>Access</th></tr>
+    <tr><td>LAN</td><td><a href="http://test-lan.ringbell.cc">test-lan.ringbell.cc</a></td><td>DNS-only A → 192.168.2.30 (LAN)</td></tr>
+    <tr><td>Tunnel</td><td><a href="http://test-public.ringbell.cc">test-public.ringbell.cc</a></td><td>Proxied CNAME → Cloudflare Tunnel (Internet)</td></tr>
+    </table>
+    <h2>Raw Files</h2>
+    <ul>
+      <li><a href="/storage/ceph-block/test.txt">ceph-block/test.txt</a></li>
+      <li><a href="/storage/nfs/test.txt">nfs/test.txt</a></li>
+      <li><a href="/storage/iscsi/test.txt">iscsi/test.txt</a></li>
+    </ul>
+    </body></html>
+    EOHTML
+    echo "index.html generated"
