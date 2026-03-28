@@ -69,6 +69,29 @@ spec:
         dashboards:
           enabled: true
           searchNamespace: ALL
+      envFromSecret: grafana-secret
+      grafana.ini:
+        server:
+          root_url: https://grafana.ringbell.cc
+        auth:
+          signout_redirect_url: https://auth.ringbell.cc/logout
+        auth.generic_oauth:
+          enabled: true
+          name: Authelia
+          icon: signin
+          client_id: grafana
+          client_secret: $__env{GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET}
+          scopes: openid profile email groups
+          auth_url: https://auth.ringbell.cc/api/oidc/authorization
+          token_url: https://auth.ringbell.cc/api/oidc/token
+          api_url: https://auth.ringbell.cc/api/oidc/userinfo
+          login_attribute_path: preferred_username
+          name_attribute_path: name
+          email_attribute_path: email
+          groups_attribute_path: groups
+          use_pkce: true
+          auto_login: true
+          allow_sign_up: true
 
     nodeExporter:
       enabled: true

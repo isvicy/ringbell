@@ -45,6 +45,11 @@ spec:
 
     secret:
       existingSecret: authelia-secret
+      additionalSecrets:
+        oidc-jwks:
+          items:
+            - key: oidc-jwks-rsa-key
+              path: private.pem
 
     configMap:
       theme: dark
@@ -84,6 +89,54 @@ spec:
         filesystem:
           enabled: true
           filename: /config/notification.txt
+
+      identity_providers:
+        oidc:
+          enabled: true
+          jwks:
+            - key_id: default
+              algorithm: RS256
+              use: sig
+              key:
+                path: /secrets/oidc-jwks/private.pem
+          cors:
+            endpoints:
+              - authorization
+              - token
+              - revocation
+              - introspection
+              - userinfo
+            allowed_origins_from_client_redirect_uris: true
+          claims_policies:
+            grafana:
+              id_token:
+                - email
+                - name
+                - groups
+                - preferred_username
+          clients:
+            - client_id: grafana
+              client_name: Grafana
+              client_secret: '$pbkdf2-sha512$310000$HC71gMzoLNH93ZUOqNl0Eg$9YXtE35tUmkTkPVth/4v4srunmg6lBbYn2GcjSXVQYB8LTGFMgX7CAchFyPsziLE1lI4Dwk9nxidKc1C8ujEIg'
+              public: false
+              authorization_policy: one_factor
+              claims_policy: grafana
+              require_pkce: true
+              pkce_challenge_method: S256
+              redirect_uris:
+                - https://grafana.ringbell.cc/login/generic_oauth
+              scopes:
+                - openid
+                - profile
+                - email
+                - groups
+              grant_types:
+                - authorization_code
+                - refresh_token
+              response_types:
+                - code
+              userinfo_signed_response_alg: none
+              token_endpoint_auth_method: client_secret_basic
 
       access_control:
         default_policy: one_factor
