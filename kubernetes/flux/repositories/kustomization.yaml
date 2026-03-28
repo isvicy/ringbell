@@ -11,3 +11,4 @@ resources:
   - helm/nfs-subdir.yaml
   - helm/backube.yaml
   - helm/synology-csi-talos.yaml
+  - helm/spegel.yaml
