@@ -20,7 +20,7 @@ spec:
                   address:
                     socket_address:
                       address: authelia.auth.svc.cluster.local
-                      port_value: 9091
+                      port_value: 80
     - "@type": type.googleapis.com/envoy.config.listener.v3.Listener
       name: listener
       filter_chains:
@@ -45,7 +45,7 @@ spec:
                       transport_api_version: V3
                       http_service:
                         server_uri:
-                          uri: http://authelia.auth.svc.cluster.local:9091
+                          uri: http://authelia.auth.svc.cluster.local
                           cluster: authelia_extauthz
                           timeout: 10s
                         path_prefix: /api/authz/ext-authz/

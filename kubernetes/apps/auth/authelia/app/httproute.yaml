@@ -12,4 +12,4 @@ spec:
   rules:
     - backendRefs:
         - name: authelia
-          port: 9091
+          port: 80
