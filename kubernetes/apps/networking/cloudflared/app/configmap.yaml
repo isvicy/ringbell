@@ -11,5 +11,7 @@ data:
     no-autoupdate: true
     ingress:
       - hostname: "*.ringbell.cc"
-        service: http://cilium-gateway-external.networking.svc.cluster.local:80
+        service: https://cilium-gateway-external.networking.svc.cluster.local:443
+        originRequest:
+          originServerName: ringbell.cc
       - service: http_status:404
