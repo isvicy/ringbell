@@ -13,17 +13,3 @@ spec:
     - backendRefs:
         - name: e2e-test
           port: 80
----
-apiVersion: externaldns.k8s.io/v1alpha1
-kind: DNSEndpoint
-metadata:
-  name: e2e-test-tunnel
-spec:
-  endpoints:
-    - dnsName: test-public.ringbell.cc
-      recordType: CNAME
-      targets:
-        - "632934dd-f7ca-456e-92eb-dacfb5043624.cfargotunnel.com"
-      providerSpecific:
-        - name: external-dns.alpha.kubernetes.io/cloudflare-proxied
-          value: "true"
