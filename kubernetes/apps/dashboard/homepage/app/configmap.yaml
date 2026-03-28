@@ -15,7 +15,7 @@ data:
         columns: 3
       Monitoring:
         style: row
-        columns: 2
+        columns: 3
   bookmarks.yaml: ""
   services.yaml: |
     - Infrastructure:
@@ -31,6 +31,10 @@ data:
         - Grafana:
             href: https://grafana.ringbell.cc
             description: Grafana Dashboards
+            icon: grafana
+        - Grafana Host:
+            href: https://grafana-host.ringbell.cc
+            description: Unraid Host Monitoring
             icon: grafana
         - Prometheus:
             href: https://prometheus.ringbell.cc
