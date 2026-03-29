@@ -92,9 +92,10 @@ spec:
     cephBlockPools:
       - name: ceph-blockpool
         spec:
-          failureDomain: host
+          failureDomain: osd
           replicated:
-            size: 2
+            size: 1
+            requireSafeReplicaSize: false
           deviceClass: nvme
         storageClass:
           enabled: true

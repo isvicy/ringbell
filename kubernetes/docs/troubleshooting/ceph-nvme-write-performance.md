@@ -152,32 +152,53 @@ ceph-block (NVMe, 2x replication, direct=1)
 
                     Before    After    Improvement
 Seq Read  (MB/s)      943    1,367      +45%
-Seq Write (MB/s)       15       79      +427% (5.3x)
-Rand Read (IOPS)    4,665   24,511      +426% (5.3x)
-Rand Write (IOPS)     154      253      +64%
-Mixed R   (IOPS)      425      660      +55%
-Mixed W   (IOPS)      181      281      +55%
-Read latency (ms)    6.85     1.29      -81%
-Write latency (ms)   1036      203      -80%
+Seq Write (MB/s)       15      102      +580% (6.8x)
+Rand Read (IOPS)    4,665   25,179      +440% (5.4x)
+Rand Write (IOPS)     154      702      +356% (4.6x)
+Mixed R   (IOPS)      425    1,475      +247% (3.5x)
+Mixed W   (IOPS)      181      629      +247% (3.5x)
+Read latency (ms)    6.85     1.26      -82%
+Write latency (ms)   1036       46      -96%
 ```
+
+### 7. Ceph pool size:2 → size:1 (eliminated redundant replication)
+
+**Symptom:** After all I/O path optimizations, writes were still 5-7% of host NVMe. The remaining gap was Ceph replication.
+
+**Why:** Both NVMe OSDs (osd.0 on w-02, osd.1 on w-01) are backed by the **same physical P4800X**. With `size: 2`, every write traverses the full virtualized I/O path twice plus a network round-trip between VMs. This replication provides zero actual durability benefit — if the NVMe dies, both copies are lost.
+
+**Fix:** Set `ceph-blockpool` to `size: 1`:
+```yaml
+cephBlockPools:
+  - name: ceph-blockpool
+    spec:
+      failureDomain: osd
+      replicated:
+        size: 1
+        requireSafeReplicaSize: false
+      deviceClass: nvme
+```
+
+Disaster recovery relies on Volsync S3 backups to Garage. If a second host with its own NVMe is added later, bump back to `size: 2` with real cross-host durability.
+
+**Result:** Rand write 253 → 702 IOPS (+177%). Seq write 79 → 102 MB/s (+28%). Write latency 126ms → 46ms (-64%).
 
 ## Remaining Write Gap
 
-Seq write at 79 MB/s is 5.8% of host NVMe (1,360 MB/s). The remaining gap is **Ceph 2x replication overhead** — every write must:
+Seq write at 102 MB/s is 7.5% of host NVMe (1,360 MB/s). The remaining gap is the inherent overhead of the virtualized I/O path:
 
-1. Client → primary OSD (write to local disk via virtio → QEMU → ZFS → NVMe)
-2. Primary → replica OSD (network transfer to second node)
-3. Replica OSD → write to its local disk (same virtio → QEMU → ZFS → NVMe path)
-4. Both acknowledge back to client
+1. Guest BlueStore O_DIRECT write → virtio-blk → QEMU io_uring → ZFS CoW → NVMe
+2. BlueStore WAL/metadata writes (RocksDB) alongside data writes
+3. ZFS transaction group (TXG) commit overhead
 
-With only 2 nodes and `size: 2`, every write traverses the full virtualized I/O path twice plus a network round-trip. This is the architectural ceiling for this setup. Further improvement requires either reducing replication (size: 1, unsafe) or adding a third node to parallelize replication.
+This is the architectural ceiling for Ceph-in-VM on a single host. To go further, either run Ceph OSDs directly on the host (Proxmox model) or skip Ceph for NVMe entirely (local-path-provisioner).
 
 ## Files Changed
 
 | File | Change |
 |------|--------|
 | `terraform/templates/worker_patch.yaml` | Added udev rule for `rotational=0` |
-| `kubernetes/apps/storage/rook-ceph-cluster/app/helmrelease.yaml` | OSD memory 2Gi → 4Gi |
+| `kubernetes/apps/storage/rook-ceph-cluster/app/helmrelease.yaml` | OSD memory 2Gi → 4Gi; NVMe pool size:2 → size:1 |
 | `CLAUDE.md` | Added safety rule: verify container image tags before use |
 | VM XML (virsh, not in git) | raw format, cache=writeback, io_uring, iothreads, 4K block alignment |
 | ZFS (Unraid host, not in git) | `ultra/ceph-data` dataset with recordsize=64K, primarycache=metadata |
@@ -190,4 +211,5 @@ With only 2 nodes and `size: 2`, every write traverses the full virtualized I/O 
 3. **Never leave libvirt disk driver at defaults.** The default `cache=writethrough` is catastrophic for write-heavy workloads.
 4. **Match ZFS recordsize to workload.** 64K for Ceph BlueStore (matches max_blob_size_ssd).
 5. **OSD memory below 2GB causes silent performance degradation.** Set at least 4Gi limit with autotune.
-6. **Reads respond dramatically to tuning; writes are bounded by replication.** In a 2-node cluster, focus optimization on the read path — it yields 5x returns.
+6. **Don't replicate across VMs on the same physical disk.** Both copies are lost together. Use `size: 1` + backups instead.
+7. **Reads respond dramatically to I/O path tuning (5x).** Writes are bounded by Ceph + virtualization overhead — replication removal gives the biggest write win.
