@@ -13,6 +13,7 @@ A homelab Kubernetes cluster managed by Flux CD GitOps, running on Talos Linux V
 - You MUST NOT print secrets, tokens, or credentials to stdout. Use them inline via `$(pass show ...)` or pipe directly into commands.
 - You MUST set Ceph `noout` flag before any worker node maintenance that takes OSDs offline.
 - You MUST upgrade Talos nodes one at a time, control planes first, workers second, verifying health between each.
+- You MUST verify container image tags exist before using them in any manifest, script, or HelmRelease. Use `skopeo inspect docker://<image>:<tag>`, the registry API, or a web search to confirm. Never guess or fabricate a tag from a tool's version number.
 
 ## Reference Repositories
 
