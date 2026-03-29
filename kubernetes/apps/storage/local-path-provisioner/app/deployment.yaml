@@ -77,10 +77,10 @@ spec:
     spec:
       serviceAccountName: local-path-provisioner-service-account
       containers:
-        - name: local-path-provisioner-service-account
-          image: rancher/local-path-provisioner-service-account:v0.0.30
+        - name: local-path-provisioner
+          image: rancher/local-path-provisioner:v0.0.30
           command:
-            - local-path-provisioner-service-account
+            - local-path-provisioner
             - start
             - --config
             - /etc/config/config.json
