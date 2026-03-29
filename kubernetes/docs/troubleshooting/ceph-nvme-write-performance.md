@@ -183,33 +183,60 @@ Disaster recovery relies on Volsync S3 backups to Garage. If a second host with 
 
 **Result:** Rand write 253 → 702 IOPS (+177%). Seq write 79 → 102 MB/s (+28%). Write latency 126ms → 46ms (-64%).
 
-## Remaining Write Gap
+### 8. Replaced ceph-block with local-path-provisioner (eliminated Ceph from NVMe path)
 
-Seq write at 102 MB/s is 7.5% of host NVMe (1,360 MB/s). The remaining gap is the inherent overhead of the virtualized I/O path:
+**Symptom:** Even with all optimizations, Ceph-in-VM seq write was 102 MB/s vs host NVMe's 1,360 MB/s. The Ceph+BlueStore+virtio stack has inherent overhead that can't be eliminated.
 
-1. Guest BlueStore O_DIRECT write → virtio-blk → QEMU io_uring → ZFS CoW → NVMe
-2. BlueStore WAL/metadata writes (RocksDB) alongside data writes
-3. ZFS transaction group (TXG) commit overhead
+**Why:** The Ceph data path (BlueStore → RBD → CSI → virtio → QEMU → ZFS → NVMe) adds multiple layers of overhead even for size:1 replication. For a homelab with a single physical NVMe, Ceph provides no benefit for fast storage — its replication, journaling, and metadata management only add latency.
 
-This is the architectural ceiling for Ceph-in-VM on a single host. To go further, either run Ceph OSDs directly on the host (Proxmox model) or skip Ceph for NVMe entirely (local-path-provisioner).
+**Fix:** Replaced ceph-block with local-path-provisioner:
+1. Removed NVMe OSDs from Ceph, deleted ceph-blockpool
+2. Formatted /dev/vdb as XFS filesystem via Talos `machine.disks`
+3. Deployed Rancher local-path-provisioner with StorageClass `local-nvme`
+4. Migrated all apps (authelia, harbor DB/redis/trivy, prometheus, alertmanager) to `local-nvme`
+5. Ceph retained only for HDD bulk storage (`ceph-bulk`)
+
+**Result:** Seq write 102 → 1,807 MB/s (+1,672%). Rand write 702 → 7,063 IOPS (+906%).
+
+## Final Results (complete journey)
+
+```
+NVMe storage: ceph-block (original) → local-nvme (final)
+
+                    Before    After     Improvement
+Seq Read  (MB/s)       943    2,558       +171% (2.7x)
+Seq Write (MB/s)        15    1,807     +11,947% (120x)
+Rand Read (IOPS)     4,665   21,452       +360% (4.6x)
+Rand Write (IOPS)      154    7,063      +4,487% (46x)
+Mixed R   (IOPS)       425   11,552      +2,618% (27x)
+Mixed W   (IOPS)       181    4,967      +2,644% (27x)
+```
 
 ## Files Changed
 
 | File | Change |
 |------|--------|
-| `terraform/templates/worker_patch.yaml` | Added udev rule for `rotational=0` |
-| `kubernetes/apps/storage/rook-ceph-cluster/app/helmrelease.yaml` | OSD memory 2Gi → 4Gi; NVMe pool size:2 → size:1 |
+| `terraform/templates/worker_patch.yaml` | Added udev rule, machine.disks for /var/mnt/nvme, kubelet.extraMounts |
+| `kubernetes/apps/storage/rook-ceph-cluster/app/helmrelease.yaml` | Removed ceph-blockpool + NVMe OSDs, OSD memory 4Gi |
+| `kubernetes/apps/storage/local-path-provisioner/` | New app: local-path-provisioner with `local-nvme` StorageClass |
+| `kubernetes/apps/storage/kustomization.yaml` | Added local-path-provisioner |
+| `kubernetes/apps/auth/authelia/app/helmrelease.yaml` | StorageClass → local-nvme |
+| `kubernetes/apps/registry/harbor/app/helmrelease.yaml` | StorageClass → local-nvme (DB, Redis, Trivy, JobLog) |
+| `kubernetes/apps/observability/kube-prometheus-stack/app/helmrelease.yaml` | StorageClass → local-nvme |
+| `kubernetes/apps/default/e2e-test/app/pvc.yaml` | StorageClass → local-nvme |
+| `kubernetes/components/volsync/` | Default StorageClass → local-nvme |
+| `terraform/main.tf` | Removed NVMe data disk from Terraform (managed by Talos) |
 | `CLAUDE.md` | Added safety rule: verify container image tags before use |
 | VM XML (virsh, not in git) | raw format, cache=writeback, io_uring, iothreads, 4K block alignment |
 | ZFS (Unraid host, not in git) | `ultra/ceph-data` dataset with recordsize=64K, primarycache=metadata |
-| Ceph config (mon store, not in git) | osd_memory_target, cache_autotune, op_num_shards/threads |
 
 ## Key Takeaways
 
-1. **Always check `ceph osd metadata` for `rotational` and `bdev_type`** on virtualized setups. virtio-blk never reports correct rotation.
-2. **Never use qcow2 for Ceph OSD data disks on ZFS.** Double CoW is a performance killer. Use raw files.
-3. **Never leave libvirt disk driver at defaults.** The default `cache=writethrough` is catastrophic for write-heavy workloads.
-4. **Match ZFS recordsize to workload.** 64K for Ceph BlueStore (matches max_blob_size_ssd).
-5. **OSD memory below 2GB causes silent performance degradation.** Set at least 4Gi limit with autotune.
+1. **For maximum NVMe performance on a single host, skip Ceph entirely.** local-path-provisioner gives 120x better seq write than Ceph RBD. Use Ceph only when real cross-host replication is needed.
+2. **Always check `ceph osd metadata` for `rotational` and `bdev_type`** on virtualized setups. virtio-blk never reports correct rotation.
+3. **Never use qcow2 for VM data disks on ZFS.** Double CoW is a performance killer. Use raw files or direct partitions.
+4. **Never leave libvirt disk driver at defaults.** The default `cache=writethrough` forces fdatasync per write — use `cache=writeback` + `io=io_uring` + iothreads.
+5. **Match ZFS recordsize to workload.** 64K for block storage workloads.
 6. **Don't replicate across VMs on the same physical disk.** Both copies are lost together. Use `size: 1` + backups instead.
-7. **Reads respond dramatically to I/O path tuning (5x).** Writes are bounded by Ceph + virtualization overhead — replication removal gives the biggest write win.
+7. **Don't `kubectl apply` GitOps-managed resources.** It conflicts with Flux reconciliation and creates resources in wrong namespaces. Always commit+push and let Flux handle it.
+8. **StatefulSet volumeClaimTemplates are immutable.** To change storageClass, delete the STS and PVCs first, then let Helm recreate them.
