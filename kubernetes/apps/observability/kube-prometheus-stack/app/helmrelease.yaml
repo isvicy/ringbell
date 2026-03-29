@@ -63,6 +63,9 @@ spec:
 
     grafana:
       defaultDashboardsEnabled: true
+      rbac:
+        create: true
+        namespaced: false
       persistence:
         enabled: false
       sidecar:
