@@ -8,6 +8,16 @@ cluster:
 machine:
   install:
     image: factory.talos.dev/installer/c9078f9419961640c712a8bf2bb9174933dfcf1da383fd8ea2b7dc21493f8bac:v1.12.6
+  disks:
+    - device: /dev/vdb
+      partitions:
+        - mountpoint: /var/mnt/nvme
+  kubelet:
+    extraMounts:
+      - destination: /var/mnt/nvme
+        type: bind
+        source: /var/mnt/nvme
+        options: ["bind", "rshared", "rw"]
   udev:
     rules:
       - ACTION=="add|change", KERNEL=="vd[b-z]", SUBSYSTEM=="block", ATTR{queue/rotational}="0"

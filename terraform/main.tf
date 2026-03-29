@@ -68,8 +68,8 @@ module "workers" {
   bridge_name    = var.bridge_name
   mac_address    = each.value.mac
 
-  # add a fast extra data disk (e.g. 180GB) on each worker
-  extra_data_size_gb = var.wk_data_gb
+  # NVMe data disk managed outside Terraform (mounted by Talos as /var/mnt/nvme)
+  extra_data_size_gb = 0
 
   # HDD-backed data disk for bulk Ceph storage
   extra_data2_size_gb   = var.wk_hdd_data_gb

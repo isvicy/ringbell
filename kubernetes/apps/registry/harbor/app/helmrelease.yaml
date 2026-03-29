@@ -44,17 +44,17 @@ spec:
           storageClass: ceph-bulk
           size: 50Gi
         database:
-          storageClass: ceph-block
+          storageClass: local-nvme
           size: 2Gi
         redis:
-          storageClass: ceph-block
+          storageClass: local-nvme
           size: 1Gi
         jobservice:
           jobLog:
-            storageClass: ceph-block
+            storageClass: local-nvme
             size: 1Gi
         trivy:
-          storageClass: ceph-block
+          storageClass: local-nvme
           size: 5Gi
 
     core:

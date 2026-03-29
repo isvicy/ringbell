@@ -6,5 +6,6 @@ resources:
   - snapshot-controller/ks.yaml
   - nfs-provisioner/ks.yaml
   - synology-csi/ks.yaml
+  - local-path-provisioner/ks.yaml
   - rook-ceph/ks.yaml
   - rook-ceph-cluster/ks.yaml

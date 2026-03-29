@@ -54,17 +54,11 @@ spec:
         nodes:
           - name: w-01
             devices:
-              - name: vdb
-                config:
-                  deviceClass: nvme
               - name: vdc
                 config:
                   deviceClass: hdd
           - name: w-02
             devices:
-              - name: vdb
-                config:
-                  deviceClass: nvme
               - name: vdc
                 config:
                   deviceClass: hdd
@@ -90,30 +84,6 @@ spec:
             memory: 1Gi
 
     cephBlockPools:
-      - name: ceph-blockpool
-        spec:
-          failureDomain: osd
-          replicated:
-            size: 1
-            requireSafeReplicaSize: false
-          deviceClass: nvme
-        storageClass:
-          enabled: true
-          name: ceph-block
-          isDefault: false
-          reclaimPolicy: Retain
-          allowVolumeExpansion: true
-          parameters:
-            imageFormat: "2"
-            imageFeatures: layering,exclusive-lock,object-map,fast-diff,deep-flatten
-            csi.storage.k8s.io/fstype: ext4
-            csi.storage.k8s.io/provisioner-secret-name: rook-csi-rbd-provisioner
-            csi.storage.k8s.io/provisioner-secret-namespace: storage
-            csi.storage.k8s.io/controller-expand-secret-name: rook-csi-rbd-provisioner
-            csi.storage.k8s.io/controller-expand-secret-namespace: storage
-            csi.storage.k8s.io/node-stage-secret-name: rook-csi-rbd-node
-            csi.storage.k8s.io/node-stage-secret-namespace: storage
-
       - name: ceph-blockpool-hdd
         spec:
           failureDomain: host

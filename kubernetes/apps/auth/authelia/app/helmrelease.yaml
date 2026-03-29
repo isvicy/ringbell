@@ -189,5 +189,5 @@ spec:
 
     persistence:
       enabled: true
-      storageClass: ceph-block
+      storageClass: local-nvme
       size: 1Gi
