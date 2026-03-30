@@ -35,6 +35,32 @@ variable "bridge_name" {
   default     = "br0"
 }
 
+variable "debian_image_local_path" {
+  description = "Path to the Debian generic QCOW2 image (leave empty to use ./images/debian-12-generic-amd64.qcow2)"
+  type        = string
+  default     = ""
+}
+
+# ---------- Tailscale subnet routers ----------
+variable "tailscale_auth_key" {
+  description = "Tailscale auth key (pass show infra/tailscale/auth-key)"
+  type        = string
+  sensitive   = true
+}
+
+variable "ts_routers" {
+  description = "Map of Tailscale subnet router VMs"
+  type = map(object({
+    ip      = string
+    mac     = string
+    bridge  = string
+    gateway = string
+    dns     = list(string)
+    routes  = list(string)
+  }))
+  default = {}
+}
+
 # ---------- Networking ----------
 variable "api_vip" {
   description = "Kubernetes API VIP (Talos native VIP)"

@@ -44,6 +44,26 @@ hdd_pools = {
   w-02 = { name = "talos-hdd2", path = "/mnt/disk2/domains/talos-hdd" }
 }
 
+# Tailscale subnet routers
+ts_routers = {
+  router-50 = {
+    ip      = "192.168.50.10"
+    mac     = "52:54:00:bb:32:0a"
+    bridge  = "br2"
+    gateway = "192.168.50.1"
+    dns     = ["192.168.50.1", "1.1.1.1"]
+    routes  = ["192.168.50.0/24"]
+  }
+  router-2 = {
+    ip      = "192.168.2.10"
+    mac     = "52:54:00:bb:02:0a"
+    bridge  = "br0"
+    gateway = "192.168.2.38"
+    dns     = ["198.18.0.2", "1.1.1.1"]
+    routes  = ["192.168.2.0/24"]
+  }
+}
+
 # Talos/Kubernetes
 talos_version      = "v1.12.6"
 kubernetes_version = "1.35.3"

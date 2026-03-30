@@ -1,0 +1,20 @@
+#cloud-config
+hostname: ${hostname}
+manage_etc_hosts: true
+
+users:
+  - name: root
+    ssh_authorized_keys:
+      - ${ssh_pub_key}
+
+write_files:
+  - path: /etc/sysctl.d/99-tailscale.conf
+    content: |
+      net.ipv4.ip_forward = 1
+      net.ipv6.conf.all.forwarding = 1
+
+runcmd:
+  - sysctl -p /etc/sysctl.d/99-tailscale.conf
+  - curl -fsSL https://tailscale.com/install.sh | sh
+  - systemctl enable --now tailscaled
+  - tailscale up --authkey="${tailscale_auth_key}" --advertise-routes=${routes} --accept-dns=false --hostname=${hostname}
