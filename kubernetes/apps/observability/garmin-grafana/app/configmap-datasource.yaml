@@ -1,0 +1,19 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: garmin-influxdb-datasource
+  labels:
+    grafana_datasource: "1"
+data:
+  garmin-influxdb.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: GarminInflux
+        uid: garmin-influxdb
+        type: influxdb
+        access: proxy
+        url: http://influxdb.observability.svc.cluster.local:8086
+        database: GarminStats
+        isDefault: false
+        editable: true

@@ -68,8 +68,13 @@ spec:
         namespaced: false
       persistence:
         enabled: false
+      plugins:
+        - marcusolsson-hourly-heatmap-panel
       sidecar:
         dashboards:
+          enabled: true
+          searchNamespace: ALL
+        datasources:
           enabled: true
           searchNamespace: ALL
       envFromSecret: grafana-secret

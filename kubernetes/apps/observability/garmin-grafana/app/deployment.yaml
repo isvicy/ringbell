@@ -1,0 +1,53 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: garmin-fetch-data
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: garmin-fetch-data
+  template:
+    metadata:
+      labels:
+        app: garmin-fetch-data
+    spec:
+      containers:
+        - name: garmin-fetch-data
+          image: ghcr.io/arpanghosh8453/garmin-fetch-data:v0.4.0
+          envFrom:
+            - secretRef:
+                name: garmin-connect-secret
+          env:
+            - name: INFLUXDB_HOST
+              value: influxdb.observability.svc.cluster.local
+            - name: INFLUXDB_PORT
+              value: "8086"
+            - name: INFLUXDB_DATABASE
+              value: GarminStats
+            - name: INFLUXDB_ENDPOINT_IS_HTTP
+              value: "True"
+            - name: INFLUXDB_VERSION
+              value: "1"
+            - name: ALWAYS_PROCESS_FIT_FILES
+              value: "True"
+            - name: FETCH_INTERVAL
+              value: "15min"
+            - name: MANUAL_START_DATE
+              value: "2015-01-01"
+          volumeMounts:
+            - name: token-store
+              mountPath: /home/appuser/token_store
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+      volumes:
+        - name: token-store
+          persistentVolumeClaim:
+            claimName: garmin-token-store
