@@ -16,3 +16,4 @@ resources:
   - helm/authelia.yaml
   - helm/harbor.yaml
   - helm/metrics-server.yaml
+  - helm/influxdata.yaml
