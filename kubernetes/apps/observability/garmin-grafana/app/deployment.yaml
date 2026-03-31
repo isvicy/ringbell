@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: garmin-fetch-data
-          image: ghcr.io/arpanghosh8453/garmin-fetch-data:v0.4.0
+          image: ghcr.io/arpanghosh8453/garmin-fetch-data:auth-fix
           envFrom:
             - secretRef:
                 name: garmin-connect-secret
