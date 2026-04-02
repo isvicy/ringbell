@@ -50,7 +50,7 @@ data:
         - Intel NUC:
             href: https://kvm-nuc.ringbell.cc
             description: JetKVM - Intel NUC 11
-            icon: intel
+            icon: intel-nuc
     - Monitoring:
         - Grafana:
             href: https://grafana.ringbell.cc
