@@ -12,7 +12,7 @@ data:
     layout:
       Infrastructure:
         style: row
-        columns: 3
+        columns: 4
       Monitoring:
         style: row
         columns: 4
@@ -31,6 +31,10 @@ data:
             href: https://harbor.ringbell.cc
             description: Container Registry
             icon: harbor
+        - Proxmox VE:
+            href: https://proxmox.ringbell.cc
+            description: Hypervisor Management
+            icon: proxmox
     - Monitoring:
         - Grafana:
             href: https://grafana.ringbell.cc

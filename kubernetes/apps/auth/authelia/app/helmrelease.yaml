@@ -180,6 +180,28 @@ spec:
                 - code
               userinfo_signed_response_alg: none
               token_endpoint_auth_method: client_secret_basic
+            - client_id: proxmox
+              client_name: Proxmox VE
+              client_secret: '$pbkdf2-sha512$310000$6cZbEpxQtEDvAyJOqLpzrQ$BJSNC5z7CClwyYI/WkrWFdwzptq6yUywftkeZdot6wkb6Se.eM0xEER.Ecnv4IZ36FT9ROw90YQZVni9mE/9Sw'
+              public: false
+              authorization_policy: one_factor
+              claims_policy: grafana
+              require_pkce: true
+              pkce_challenge_method: S256
+              redirect_uris:
+                - https://proxmox.ringbell.cc
+              scopes:
+                - openid
+                - profile
+                - email
+                - groups
+              grant_types:
+                - authorization_code
+                - refresh_token
+              response_types:
+                - code
+              userinfo_signed_response_alg: none
+              token_endpoint_auth_method: client_secret_basic
 
       access_control:
         default_policy: one_factor
