@@ -29,6 +29,7 @@ spec:
 
     prometheus:
       prometheusSpec:
+        enableRemoteWriteReceiver: true
         retention: 14d
         retentionSize: "40GB"
         walCompression: true
@@ -70,6 +71,68 @@ spec:
         enabled: false
       plugins:
         - marcusolsson-hourly-heatmap-panel
+        - grafana-lokiexplore-app
+        - grafana-exploretraces-app
+      additionalDataSources:
+        - name: Loki
+          type: loki
+          uid: loki
+          access: proxy
+          url: http://loki.observability.svc.cluster.local:3100
+          jsonData:
+            derivedFields:
+              - datasourceUid: tempo
+                matcherRegex: '"trace_id":\s*"(\w+)"'
+                name: TraceID
+                url: "${__value.raw}"
+              - datasourceUid: tempo
+                matcherRegex: 'trace_id=(\w+)'
+                name: TraceID
+                url: "${__value.raw}"
+        - name: Tempo
+          type: tempo
+          uid: tempo
+          access: proxy
+          url: http://tempo.observability.svc.cluster.local:3200
+          jsonData:
+            httpMethod: GET
+            tracesToLogsV2:
+              datasourceUid: loki
+              spanStartTimeShift: "-1h"
+              spanEndTimeShift: "1h"
+              filterByTraceID: true
+              filterBySpanID: false
+              customQuery: true
+              query: '{${__tags}} |= "${__span.traceId}"'
+              tags:
+                - key: service.name
+                  value: service_name
+                - key: k8s.namespace.name
+                  value: namespace
+            tracesToMetrics:
+              datasourceUid: prometheus
+              spanStartTimeShift: "-1h"
+              spanEndTimeShift: "1h"
+              tags:
+                - key: service.name
+                  value: service
+              queries:
+                - name: Request rate
+                  query: 'sum(rate(traces_spanmetrics_calls_total{${__tags}}[5m]))'
+                - name: Error rate
+                  query: 'sum(rate(traces_spanmetrics_calls_total{${__tags},status_code="STATUS_CODE_ERROR"}[5m]))'
+                - name: Duration (p95)
+                  query: 'histogram_quantile(0.95, sum(rate(traces_spanmetrics_latency_bucket{${__tags}}[5m])) by (le))'
+            serviceMap:
+              datasourceUid: prometheus
+            nodeGraph:
+              enabled: true
+            search:
+              hide: false
+            traceQuery:
+              timeShiftEnabled: true
+              spanStartTimeShift: "1h"
+              spanEndTimeShift: "-1h"
       sidecar:
         dashboards:
           enabled: true

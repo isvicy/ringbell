@@ -17,3 +17,4 @@ resources:
   - helm/harbor.yaml
   - helm/metrics-server.yaml
   - helm/influxdata.yaml
+  - helm/grafana.yaml
