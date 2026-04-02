@@ -51,6 +51,7 @@ spec:
         reject_old_samples_max_age: 168h
       compactor:
         retention_enabled: true
+        delete_request_store: filesystem
       ruler:
         enable_api: true
 
