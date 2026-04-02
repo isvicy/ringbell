@@ -36,3 +36,11 @@ data:
         }
       }
     }
+
+    http://nas.ringbell.cc {
+      reverse_proxy 192.168.50.177:5001 {
+        transport http {
+          tls_insecure_skip_verify
+        }
+      }
+    }

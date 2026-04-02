@@ -12,7 +12,7 @@ data:
     layout:
       Infrastructure:
         style: row
-        columns: 4
+        columns: 5
       KVM:
         style: row
         columns: 3
@@ -38,6 +38,10 @@ data:
             href: https://proxmox.ringbell.cc
             description: Hypervisor Management
             icon: proxmox
+        - Synology NAS:
+            href: https://nas.ringbell.cc
+            description: Synology DSM
+            icon: synology
     - KVM:
         - Mac Mini:
             href: https://kvm-macmini.ringbell.cc
