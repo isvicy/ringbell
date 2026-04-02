@@ -13,6 +13,9 @@ data:
       Infrastructure:
         style: row
         columns: 4
+      KVM:
+        style: row
+        columns: 3
       Monitoring:
         style: row
         columns: 4
@@ -35,6 +38,19 @@ data:
             href: https://proxmox.ringbell.cc
             description: Hypervisor Management
             icon: proxmox
+    - KVM:
+        - Mac Mini:
+            href: https://kvm-macmini.ringbell.cc
+            description: JetKVM - Mac Mini
+            icon: apple
+        - Proxmox Host:
+            href: https://kvm-proxmox.ringbell.cc
+            description: JetKVM - Proxmox Host
+            icon: proxmox
+        - Intel NUC:
+            href: https://kvm-nuc.ringbell.cc
+            description: JetKVM - Intel NUC 11
+            icon: intel
     - Monitoring:
         - Grafana:
             href: https://grafana.ringbell.cc

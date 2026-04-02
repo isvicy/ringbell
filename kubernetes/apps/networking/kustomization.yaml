@@ -9,3 +9,4 @@ resources:
   - caddy/ks.yaml
   - cloudflared/ks.yaml
   - external-dns/ks.yaml
+  - jetkvm/ks.yaml
