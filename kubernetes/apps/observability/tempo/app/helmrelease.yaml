@@ -79,7 +79,7 @@ spec:
     persistence:
       enabled: true
       size: 10Gi
-      storageClassName: ceph-block
+      storageClassName: ceph-bulk
 
     serviceMonitor:
       enabled: true

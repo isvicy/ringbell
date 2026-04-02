@@ -57,7 +57,7 @@ spec:
     singleBinary:
       replicas: 1
       persistence:
-        storageClass: ceph-block
+        storageClass: ceph-bulk
         size: 20Gi
       resources:
         requests:
