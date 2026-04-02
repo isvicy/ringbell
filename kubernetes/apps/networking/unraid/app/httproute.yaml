@@ -1,0 +1,15 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: unraid
+spec:
+  hostnames:
+    - unraid.ringbell.cc
+  parentRefs:
+    - name: internal
+      namespace: networking
+  rules:
+    - backendRefs:
+        - name: unraid
+          port: 80

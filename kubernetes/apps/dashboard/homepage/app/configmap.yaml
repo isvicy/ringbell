@@ -42,6 +42,10 @@ data:
             href: https://nas.ringbell.cc
             description: Synology DSM
             icon: synology
+        - Unraid:
+            href: https://unraid.ringbell.cc
+            description: Unraid Server
+            icon: unraid
     - KVM:
         - Mac Mini:
             href: https://kvm-macmini.ringbell.cc

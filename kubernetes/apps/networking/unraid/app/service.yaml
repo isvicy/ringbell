@@ -1,0 +1,19 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: unraid
+spec:
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: unraid
+subsets:
+  - addresses:
+      - ip: 192.168.2.200
+    ports:
+      - port: 80

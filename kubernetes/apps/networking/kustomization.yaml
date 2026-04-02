@@ -10,3 +10,4 @@ resources:
   - cloudflared/ks.yaml
   - external-dns/ks.yaml
   - jetkvm/ks.yaml
+  - unraid/ks.yaml
