@@ -36,8 +36,6 @@ spec:
               value: "True"
             - name: FETCH_INTERVAL
               value: "15min"
-            - name: MANUAL_START_DATE
-              value: "2015-01-01"
             - name: TOKEN_DIR
               value: /home/appuser/token_store
           volumeMounts:
