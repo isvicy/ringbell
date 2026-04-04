@@ -4,6 +4,12 @@
 
 A homelab Kubernetes cluster managed by Flux CD GitOps, running on Talos Linux VMs (Unraid/libvirt KVM). Infrastructure provisioned via Terraform, workloads declared in `kubernetes/`.
 
+## Cluster Context 
+
+When deploying to this homelab K8s cluster: storage classes are 'ceph-bulk' and 'local-path'. Always verify existing StorageClass names with `kubectl get sc` before referencing them in manifests. StorageClasses are immutable — if fields need changing, delete and recreate.
+
+This is a GitOps (Flux) managed cluster. Never use `kubectl apply` or `kubectl edit` to make persistent changes — they will be overwritten by Flux reconciliation. All changes must go through git commits to the repo.
+
 ## Safety Rules
 
 **IMPORTANT — This is a live homelab cluster. Mistakes can cause data loss, downtime, or require a full rebuild.**
@@ -15,6 +21,10 @@ A homelab Kubernetes cluster managed by Flux CD GitOps, running on Talos Linux V
 - You MUST upgrade Talos nodes one at a time, control planes first, workers second, verifying health between each.
 - You MUST verify container image tags exist before using them in any manifest, script, or HelmRelease. Use `skopeo inspect docker://<image>:<tag>`, the registry API, or a web search to confirm. Never guess or fabricate a tag from a tool's version number.
 
+## Infrastructure / Kubernetes 
+
+When working with Helm charts, ALWAYS read the chart's values schema (`helm show values <chart>` or check the chart repo) before guessing at value names or structure. Never assume Helm value paths.
+
 ## Reference Repositories
 
 These repos are added as working directories and should be consulted when setting up or troubleshooting components:
@@ -25,8 +35,28 @@ These repos are added as working directories and should be consulted when settin
    - cert-manager, cilium, cloudflared, external-dns, external-secrets
    - ingress-nginx, rook, spegel, volsync
    - Rich examples of app deployments, HTTPRoutes, Volsync opt-in, dual external-dns (Cloudflare + UniFi)
+3. **`/home/isvicy/repos/github/homelab/khuedoan-homelab`** - Another production homelab utilizes Infrastructure as Code and GitOps to automate provisioning, operating, and updating self-hosted services in homelab. Core features:
+   - Common applications: Gitea, Jellyfin, Paperless...
+   - Automated bare metal provisioning with PXE boot
+   - Automated Kubernetes installation and management
+   - Installing and managing applications using GitOps
+   - Automatic rolling upgrade for OS and Kubernetes
+   - Automatically update apps (with approval)
+   - Modular architecture, easy to add or remove features/components
+   - Automated certificate management
+   - Automatically update DNS records for exposed services
+   - VPN (Tailscale or Wireguard)
+   - Expose services to the internet securely with Cloudflare Tunnel
+   - CI/CD platform
+   - Private container registry
+   - Distributed storage
+   - Support multiple environments (dev, prod)
+   - Monitoring and alerting
+   - Automated backup and restore
+   - Single sign-on
+   - Infrastructure testing
 
-3. **`/home/isvicy/repos/github/synology-csi-talos`** — Custom fork of Synology CSI driver for Talos Linux compatibility. Uses nsenter wrappers to access the host iSCSI stack. Helm chart served from GitHub Pages.
+4. **`/home/isvicy/repos/github/synology-csi-talos`** — Custom fork of Synology CSI driver for Talos Linux compatibility. Uses nsenter wrappers to access the host iSCSI stack. Helm chart served from GitHub Pages.
 
 ## Key Commands
 
