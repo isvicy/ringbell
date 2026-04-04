@@ -3125,16 +3125,6 @@ data:
     }
   flux-logs.json: |
     {
-      "__inputs": [
-        {
-          "name": "DS_LOKI",
-          "label": "Loki",
-          "description": "",
-          "type": "datasource",
-          "pluginId": "loki",
-          "pluginName": "Loki"
-        }
-      ],
       "annotations": {
         "list": [
           {
@@ -3181,7 +3171,10 @@ data:
       "liveNow": false,
       "panels": [
         {
-          "datasource": "${DS_LOKI}",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
           "description": "",
           "fieldConfig": {
             "defaults": {
@@ -3253,7 +3246,10 @@ data:
           },
           "targets": [
             {
-              "datasource": "${DS_LOKI}",
+              "datasource": {
+                "type": "loki",
+                "uid": "loki"
+              },
               "expr": "sum(count_over_time({namespace=~\"$namespace\", stream=~\"$stream\", app =~\"$controller\"} | json | __error__!=\"JSONParserErr\" | level=~\"$level\" |= \"$query\" [$__interval]))",
               "instant": false,
               "legendFormat": "Log count",
@@ -3264,7 +3260,10 @@ data:
           "type": "timeseries"
         },
         {
-          "datasource": "${DS_LOKI}",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
           "description": "Logs from services running in Kubernetes",
           "gridPos": {
             "h": 25,
@@ -3285,7 +3284,10 @@ data:
           },
           "targets": [
             {
-              "datasource": "${DS_LOKI}",
+              "datasource": {
+                "type": "loki",
+                "uid": "loki"
+              },
               "expr": "{namespace=~\"$namespace\", stream=~\"$stream\", app =~\"$controller\"} | json | __error__!=\"JSONParserErr\" | level=~\"$level\" |= \"$query\"",
               "refId": "A"
             }
@@ -3366,7 +3368,10 @@ data:
                 "$__all"
               ]
             },
-            "datasource": "${DS_LOKI}",
+            "datasource": {
+              "type": "loki",
+              "uid": "loki"
+            },
             "definition": "label_values(app)",
             "hide": 0,
             "includeAll": true,
@@ -3391,7 +3396,10 @@ data:
                 "flux-system"
               ]
             },
-            "datasource": "${DS_LOKI}",
+            "datasource": {
+              "type": "loki",
+              "uid": "loki"
+            },
             "definition": "label_values(namespace)",
             "hide": 0,
             "includeAll": true,
@@ -3412,7 +3420,10 @@ data:
               "text": "All",
               "value": "$__all"
             },
-            "datasource": "${DS_LOKI}",
+            "datasource": {
+              "type": "loki",
+              "uid": "loki"
+            },
             "definition": "label_values(stream)",
             "hide": 0,
             "includeAll": true,
@@ -3428,9 +3439,9 @@ data:
           },
           {
             "current": {
-              "selected": false,
+              "selected": true,
               "text": "Loki",
-              "value": "Loki"
+              "value": "loki"
             },
             "hide": 0,
             "includeAll": false,
