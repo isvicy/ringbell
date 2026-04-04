@@ -3250,7 +3250,7 @@ data:
                 "type": "loki",
                 "uid": "loki"
               },
-              "expr": "sum(count_over_time({namespace=~\"$namespace\", stream=~\"$stream\", app =~\"$controller\"} | json | __error__!=\"JSONParserErr\" | level=~\"$level\" |= \"$query\" [$__interval]))",
+              "expr": "sum(count_over_time({namespace=~\"$namespace\", app =~\"$controller\"} | json | __error__!=\"JSONParserErr\" | level=~\"$level\" |= \"$query\" [$__interval]))",
               "instant": false,
               "legendFormat": "Log count",
               "range": true,
@@ -3288,7 +3288,7 @@ data:
                 "type": "loki",
                 "uid": "loki"
               },
-              "expr": "{namespace=~\"$namespace\", stream=~\"$stream\", app =~\"$controller\"} | json | __error__!=\"JSONParserErr\" | level=~\"$level\" |= \"$query\"",
+              "expr": "{namespace=~\"$namespace\", app =~\"$controller\"} | json | __error__!=\"JSONParserErr\" | level=~\"$level\" |= \"$query\"",
               "refId": "A"
             }
           ],
@@ -3407,30 +3407,6 @@ data:
             "name": "namespace",
             "options": [],
             "query": "label_values(namespace)",
-            "refresh": 1,
-            "regex": "",
-            "skipUrlSync": false,
-            "sort": 0,
-            "type": "query"
-          },
-          {
-            "allValue": ".+",
-            "current": {
-              "selected": false,
-              "text": "All",
-              "value": "$__all"
-            },
-            "datasource": {
-              "type": "loki",
-              "uid": "loki"
-            },
-            "definition": "label_values(stream)",
-            "hide": 0,
-            "includeAll": true,
-            "multi": true,
-            "name": "stream",
-            "options": [],
-            "query": "label_values(stream)",
             "refresh": 1,
             "regex": "",
             "skipUrlSync": false,
