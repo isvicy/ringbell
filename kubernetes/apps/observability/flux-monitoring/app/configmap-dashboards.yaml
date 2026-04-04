@@ -1690,7 +1690,7 @@ data:
               "datasource": {
                 "uid": "${DS_PROMETHEUS}"
               },
-              "expr": "sum(rate(rest_client_requests_total{namespace=\"$namespace\",pod=~\".*-controller-.*\"}[1m]))",
+              "expr": "sum(rate(rest_client_requests_total{namespace=\"$namespace\",pod=~\".*-controller-.*\"}[$__rate_interval]))",
               "interval": "",
               "legendFormat": "requests",
               "refId": "A"
@@ -1785,7 +1785,7 @@ data:
               "datasource": {
                 "uid": "${DS_PROMETHEUS}"
               },
-              "expr": "sum(rate(rest_client_requests_total{namespace=\"$namespace\"}[1m]))",
+              "expr": "sum(rate(rest_client_requests_total{namespace=\"$namespace\"}[$__rate_interval]))",
               "hide": false,
               "interval": "",
               "legendFormat": "total",
@@ -1795,7 +1795,7 @@ data:
               "datasource": {
                 "uid": "${DS_PROMETHEUS}"
               },
-              "expr": "sum(rate(rest_client_requests_total{namespace=\"$namespace\",code!~\"2..\"}[1m]))",
+              "expr": "sum(rate(rest_client_requests_total{namespace=\"$namespace\",code!~\"2..\"}[$__rate_interval]))",
               "hide": false,
               "interval": "",
               "legendFormat": "errors",
@@ -1914,7 +1914,7 @@ data:
               "datasource": {
                 "uid": "${DS_PROMETHEUS}"
               },
-              "expr": "rate(process_cpu_seconds_total{namespace=\"$namespace\",pod=~\".*-controller-.*\"}[1m])",
+              "expr": "rate(process_cpu_seconds_total{namespace=\"$namespace\",pod=~\".*-controller-.*\"}[$__rate_interval])",
               "interval": "",
               "legendFormat": "{{pod}}",
               "refId": "A"
@@ -2224,7 +2224,7 @@ data:
               "datasource": {
                 "uid": "${DS_PROMETHEUS}"
               },
-              "expr": "sum(increase(controller_runtime_reconcile_total{controller=\"kustomization\",result!=\"error\"}[1m])) by (controller)",
+              "expr": "sum(increase(controller_runtime_reconcile_total{controller=\"kustomization\",result!=\"error\"}[$__rate_interval])) by (controller)",
               "format": "time_series",
               "interval": "",
               "legendFormat": "successful reconciliations ",
@@ -2234,7 +2234,7 @@ data:
               "datasource": {
                 "uid": "${DS_PROMETHEUS}"
               },
-              "expr": "sum(increase(controller_runtime_reconcile_total{controller=\"kustomization\",result=\"error\"}[1m])) by (controller)",
+              "expr": "sum(increase(controller_runtime_reconcile_total{controller=\"kustomization\",result=\"error\"}[$__rate_interval])) by (controller)",
               "format": "time_series",
               "interval": "",
               "legendFormat": "failed reconciliations ",
@@ -2354,7 +2354,7 @@ data:
               "datasource": {
                 "uid": "${DS_PROMETHEUS}"
               },
-              "expr": "sum(increase(controller_runtime_reconcile_total{controller=\"gitrepository\",result!=\"error\"}[1m]))",
+              "expr": "sum(increase(controller_runtime_reconcile_total{controller=\"gitrepository\",result!=\"error\"}[$__rate_interval]))",
               "format": "time_series",
               "interval": "",
               "legendFormat": "successful git pulls",
@@ -2364,7 +2364,7 @@ data:
               "datasource": {
                 "uid": "${DS_PROMETHEUS}"
               },
-              "expr": "sum(increase(controller_runtime_reconcile_total{controller=\"gitrepository\",result=\"error\"}[1m]))",
+              "expr": "sum(increase(controller_runtime_reconcile_total{controller=\"gitrepository\",result=\"error\"}[$__rate_interval]))",
               "format": "time_series",
               "interval": "",
               "legendFormat": "failed git pulls",
@@ -2460,7 +2460,7 @@ data:
               "datasource": {
                 "uid": "${DS_PROMETHEUS}"
               },
-              "expr": "sum(increase(controller_runtime_reconcile_total{controller=\"ocirepository\",result!=\"error\"}[1m]))",
+              "expr": "sum(increase(controller_runtime_reconcile_total{controller=\"ocirepository\",result!=\"error\"}[$__rate_interval]))",
               "format": "time_series",
               "interval": "",
               "legendFormat": "successful oci pulls",
@@ -2470,7 +2470,7 @@ data:
               "datasource": {
                 "uid": "${DS_PROMETHEUS}"
               },
-              "expr": "sum(increase(controller_runtime_reconcile_total{controller=\"ocirepository\",result=\"error\"}[1m]))",
+              "expr": "sum(increase(controller_runtime_reconcile_total{controller=\"ocirepository\",result=\"error\"}[$__rate_interval]))",
               "format": "time_series",
               "interval": "",
               "legendFormat": "failed oci pulls",
@@ -2566,7 +2566,7 @@ data:
               "datasource": {
                 "uid": "${DS_PROMETHEUS}"
               },
-              "expr": "sum(increase(controller_runtime_reconcile_total{controller=\"helmrepository\",result!=\"error\"}[1m]))",
+              "expr": "sum(increase(controller_runtime_reconcile_total{controller=\"helmrepository\",result!=\"error\"}[$__rate_interval]))",
               "format": "time_series",
               "interval": "",
               "legendFormat": "successful helm pulls",
@@ -2576,7 +2576,7 @@ data:
               "datasource": {
                 "uid": "${DS_PROMETHEUS}"
               },
-              "expr": "sum(increase(controller_runtime_reconcile_total{controller=\"helmrepository\",result=\"error\"}[1m]))",
+              "expr": "sum(increase(controller_runtime_reconcile_total{controller=\"helmrepository\",result=\"error\"}[$__rate_interval]))",
               "format": "time_series",
               "interval": "",
               "legendFormat": "failed helm pulls",
@@ -2672,7 +2672,7 @@ data:
               "datasource": {
                 "uid": "${DS_PROMETHEUS}"
               },
-              "expr": "sum(increase(controller_runtime_reconcile_total{controller=\"bucket\",result!=\"error\"}[1m]))",
+              "expr": "sum(increase(controller_runtime_reconcile_total{controller=\"bucket\",result!=\"error\"}[$__rate_interval]))",
               "format": "time_series",
               "interval": "",
               "legendFormat": "successful bucket pulls",
@@ -2682,7 +2682,7 @@ data:
               "datasource": {
                 "uid": "${DS_PROMETHEUS}"
               },
-              "expr": "sum(increase(controller_runtime_reconcile_total{controller=\"bucket\",result=\"error\"}[1m]))",
+              "expr": "sum(increase(controller_runtime_reconcile_total{controller=\"bucket\",result=\"error\"}[$__rate_interval]))",
               "format": "time_series",
               "interval": "",
               "legendFormat": "failed bucket pulls",
@@ -2917,7 +2917,7 @@ data:
               "datasource": {
                 "uid": "${DS_PROMETHEUS}"
               },
-              "expr": "sum(increase(controller_runtime_reconcile_total{controller=\"helmrelease\",result!=\"error\"}[1m])) by (controller)",
+              "expr": "sum(increase(controller_runtime_reconcile_total{controller=\"helmrelease\",result!=\"error\"}[$__rate_interval])) by (controller)",
               "format": "time_series",
               "interval": "",
               "legendFormat": "successful reconciliations ",
@@ -2927,7 +2927,7 @@ data:
               "datasource": {
                 "uid": "${DS_PROMETHEUS}"
               },
-              "expr": "sum(increase(controller_runtime_reconcile_total{controller=\"helmrelease\",result=\"error\"}[1m])) by (controller)",
+              "expr": "sum(increase(controller_runtime_reconcile_total{controller=\"helmrelease\",result=\"error\"}[$__rate_interval])) by (controller)",
               "format": "time_series",
               "interval": "",
               "legendFormat": "failed reconciliations ",
@@ -3023,7 +3023,7 @@ data:
               "datasource": {
                 "uid": "${DS_PROMETHEUS}"
               },
-              "expr": "sum(increase(controller_runtime_reconcile_total{controller=\"helmchart\",result!=\"error\"}[1m])) by (controller)",
+              "expr": "sum(increase(controller_runtime_reconcile_total{controller=\"helmchart\",result!=\"error\"}[$__rate_interval])) by (controller)",
               "format": "time_series",
               "interval": "",
               "legendFormat": "successful chart pulls",
@@ -3033,7 +3033,7 @@ data:
               "datasource": {
                 "uid": "${DS_PROMETHEUS}"
               },
-              "expr": "sum(increase(controller_runtime_reconcile_total{controller=\"helmchart\",result=\"error\"}[1m])) by (controller)",
+              "expr": "sum(increase(controller_runtime_reconcile_total{controller=\"helmchart\",result=\"error\"}[$__rate_interval])) by (controller)",
               "format": "time_series",
               "interval": "",
               "legendFormat": "failed chart pulls",
