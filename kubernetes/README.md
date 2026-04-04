@@ -21,7 +21,7 @@ kubernetes/
 │   ├── kube-system/        # Spegel OCI registry mirror, metrics-server
 │   ├── observability/      # kube-prometheus-stack (Prometheus, Grafana, Alertmanager)
 │   ├── flux-system/        # PriorityClasses
-│   └── default/            # E2E test workload
+│   └── default/            # E2E storage test (manual, not Flux-managed)
 ├── components/
 │   └── volsync/            # Reusable kustomize component (backup + restore + PVC)
 └── docs/
@@ -42,7 +42,7 @@ onepassword-connect
               ├─> external-dns
               ├─> synology-csi (also depends on snapshot-controller)
               ├─> volsync
-              └─> (indirectly → e2e-test)
+              └─> volsync
 
 gateway-api ─> cilium ─> cloudflared
 cert-manager ─> cert-manager-issuers
@@ -315,6 +315,21 @@ spec:
       remoteRef:
         key: myapp          # 1Password item name
         property: password   # field name
+```
+
+## E2E Storage Test
+
+Manually triggered test that verifies all storage classes (`local-nvme`, `ceph-bulk`, `nfs-unraid`, `synology-iscsi`) are working. Not managed by Flux — run after significant storage or PVC changes.
+
+```bash
+# Deploy test (creates PVCs, deployment, service, HTTPRoute)
+kubectl apply -k kubernetes/apps/default/e2e-test/app
+
+# Check results at http://test-lan.ringbell.cc
+# Shows per-backend status (OK/FAIL), persistence verification, and raw file links
+
+# Clean up when done
+kubectl delete -k kubernetes/apps/default/e2e-test/app
 ```
 
 ## Gotchas

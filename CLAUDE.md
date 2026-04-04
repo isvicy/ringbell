@@ -85,6 +85,11 @@ kubectl -n storage exec deploy/rook-ceph-operator -- ceph -s \
 
 # Secrets (never print to stdout)
 pass show <path>  # use inline: $(pass show <path>)
+
+# E2E Storage Test (manual, not Flux-managed)
+kubectl apply -k kubernetes/apps/default/e2e-test/app   # deploy
+# visit http://test-lan.ringbell.cc to check results
+kubectl delete -k kubernetes/apps/default/e2e-test/app  # clean up
 ```
 
 ## Directory Structure
