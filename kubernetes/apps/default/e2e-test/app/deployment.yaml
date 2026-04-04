@@ -18,8 +18,8 @@ spec:
           image: docker.io/library/busybox:1.37
           command: ["/bin/sh", "/scripts/init.sh"]
           volumeMounts:
-            - name: ceph-block
-              mountPath: /data/ceph-block
+            - name: local-nvme
+              mountPath: /data/local-nvme
             - name: ceph-bulk
               mountPath: /data/ceph-bulk
             - name: nfs
@@ -57,8 +57,8 @@ spec:
             limits:
               memory: 64Mi
           volumeMounts:
-            - name: ceph-block
-              mountPath: /data/ceph-block
+            - name: local-nvme
+              mountPath: /data/local-nvme
               readOnly: true
             - name: ceph-bulk
               mountPath: /data/ceph-bulk
@@ -77,9 +77,9 @@ spec:
               mountPath: /usr/share/nginx/html
               readOnly: true
       volumes:
-        - name: ceph-block
+        - name: local-nvme
           persistentVolumeClaim:
-            claimName: e2e-ceph
+            claimName: e2e-local-nvme
         - name: ceph-bulk
           persistentVolumeClaim:
             claimName: e2e-ceph-bulk

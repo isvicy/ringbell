@@ -21,8 +21,8 @@ data:
             add_header Content-Type text/plain;
         }
 
-        location /storage/ceph-block/ {
-            alias /data/ceph-block/;
+        location /storage/local-nvme/ {
+            alias /data/local-nvme/;
             autoindex on;
             add_header Content-Type text/plain;
         }
@@ -51,7 +51,7 @@ data:
     TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
     POD=$(hostname)
 
-    for backend in ceph-block ceph-bulk nfs iscsi; do
+    for backend in local-nvme ceph-bulk nfs iscsi; do
       dir="/data/${backend}"
       if [ ! -f "${dir}/test.txt" ]; then
         echo "[${TIMESTAMP}] first write by ${POD} - backend: ${backend}" > "${dir}/test.txt"
@@ -83,10 +83,10 @@ data:
     <tr><th>Backend</th><th>StorageClass</th><th>Mode</th><th>Status</th><th>Data</th></tr>
     EOHTML
 
-    for backend in ceph-block ceph-bulk nfs iscsi; do
+    for backend in local-nvme ceph-bulk nfs iscsi; do
       dir="/data/${backend}"
       case "${backend}" in
-        ceph-block) sc="ceph-block"; mode="RWO" ;;
+        local-nvme) sc="local-nvme"; mode="RWO" ;;
         ceph-bulk)  sc="ceph-bulk";  mode="RWO" ;;
         nfs)        sc="nfs-unraid"; mode="RWX" ;;
         iscsi)      sc="synology-iscsi"; mode="RWO" ;;
@@ -109,7 +109,7 @@ data:
     </table>
     <h2>Raw Files</h2>
     <ul>
-      <li><a href="/storage/ceph-block/test.txt">ceph-block/test.txt</a></li>
+      <li><a href="/storage/local-nvme/test.txt">local-nvme/test.txt</a></li>
       <li><a href="/storage/ceph-bulk/test.txt">ceph-bulk/test.txt</a></li>
       <li><a href="/storage/nfs/test.txt">nfs/test.txt</a></li>
       <li><a href="/storage/iscsi/test.txt">iscsi/test.txt</a></li>
