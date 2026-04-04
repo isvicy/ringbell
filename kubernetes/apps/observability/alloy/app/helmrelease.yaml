@@ -26,14 +26,21 @@ spec:
       type: daemonset
 
     alloy:
+      mounts:
+        varlog: true
+
       configMap:
         content: |
-          // Discover Kubernetes pods for log collection
+          // Discover pods on this node only
           discovery.kubernetes "pods" {
             role = "pod"
+            selectors {
+              role  = "pod"
+              field = "spec.nodeName=" + sys.env("HOSTNAME")
+            }
           }
 
-          // Relabel discovered pods to extract useful metadata
+          // Extract metadata labels and construct log file path
           discovery.relabel "pods" {
             targets = discovery.kubernetes.pods.targets
 
@@ -62,19 +69,40 @@ spec:
               source_labels = ["__meta_kubernetes_pod_label_app"]
               target_label  = "app"
             }
+
+            // Construct __path__ for CRI log files
+            rule {
+              source_labels = ["__meta_kubernetes_pod_uid", "__meta_kubernetes_pod_container_name"]
+              separator     = "/"
+              action        = "replace"
+              replacement   = "/var/log/pods/*$1/*.log"
+              target_label  = "__path__"
+            }
           }
 
-          // Collect pod logs
-          loki.source.kubernetes "pods" {
-            targets    = discovery.relabel.pods.output
-            forward_to = [loki.process.pods.receiver]
+          // Match log files on the local filesystem
+          local.file_match "pods" {
+            path_targets = discovery.relabel.pods.output
           }
 
-          // Process logs: add static labels and detect log level
+          // Tail matched log files
+          loki.source.file "pods" {
+            targets       = local.file_match.pods.targets
+            tail_from_end = true
+            forward_to    = [loki.process.pods.receiver]
+          }
+
+          // Parse CRI format and promote stream label
           loki.process "pods" {
             forward_to = [loki.write.default.receiver]
 
             stage.cri {}
+
+            stage.labels {
+              values = {
+                stream = "",
+              }
+            }
 
             stage.label_drop {
               values = ["filename"]
