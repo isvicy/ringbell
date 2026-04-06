@@ -1,7 +1,15 @@
 {
   "hooks": {
-    "afterEdit": {
-      "command": "if echo $FILEPATH | grep -qE '\\.ya?ml$'; then yamllint -d relaxed $FILEPATH 2>/dev/null || echo 'YAML lint warning'; fi"
-    }
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "filepath=$(jq -r '.tool_input.file_path // empty') && [ -n \"$filepath\" ] && echo \"$filepath\" | grep -qE '\\.ya?ml$' && yamllint -d relaxed \"$filepath\" 2>/dev/null || true"
+          }
+        ]
+      }
+    ]
   }
 }
