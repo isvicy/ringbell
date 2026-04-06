@@ -33,9 +33,9 @@ cp_vcpu      = 4
 cp_memory_mb = 16384
 cp_disk_gb   = 80
 
-wk_vcpu      = 8
-wk_memory_mb = 32768
-wk_disk_gb   = 160 # worker root on NVMe
+wk_vcpu        = 8
+wk_memory_mb   = 32768
+wk_disk_gb     = 160  # worker root on NVMe
 wk_data_gb     = 180  # extra data disk on NVMe
 wk_hdd_data_gb = 4096 # HDD-backed bulk storage disk
 
@@ -47,12 +47,16 @@ hdd_pools = {
 # Tailscale subnet routers
 ts_routers = {
   router-50 = {
-    ip      = "192.168.50.10"
-    mac     = "52:54:00:bb:32:0a"
-    bridge  = "br2"
-    gateway = "192.168.50.1"
-    dns     = ["192.168.50.1", "1.1.1.1"]
-    routes  = ["192.168.50.0/24"]
+    ip             = "192.168.50.10"
+    mac            = "52:54:00:bb:32:0a"
+    bridge         = "br2"
+    gateway        = "192.168.50.1"
+    dns            = ["192.168.50.1", "1.1.1.1"]
+    routes         = ["192.168.50.0/24"]
+    ipv6           = true
+    accept_routes  = true
+    static_routes  = [{ dest = "192.168.2.0/24", via = "192.168.50.1" }]
+    ip_rule_bypass = ["192.168.2.0/24"]
   }
   router-2 = {
     ip      = "192.168.2.10"

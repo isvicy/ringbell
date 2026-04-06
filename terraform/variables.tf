@@ -51,12 +51,16 @@ variable "tailscale_auth_key" {
 variable "ts_routers" {
   description = "Map of Tailscale subnet router VMs"
   type = map(object({
-    ip      = string
-    mac     = string
-    bridge  = string
-    gateway = string
-    dns     = list(string)
-    routes  = list(string)
+    ip             = string
+    mac            = string
+    bridge         = string
+    gateway        = string
+    dns            = list(string)
+    routes         = list(string)
+    ipv6           = optional(bool, false)
+    accept_routes  = optional(bool, false)
+    static_routes  = optional(list(object({ dest = string, via = string })), [])
+    ip_rule_bypass = optional(list(string), [])
   }))
   default = {}
 }

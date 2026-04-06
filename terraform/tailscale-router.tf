@@ -26,6 +26,8 @@ resource "libvirt_cloudinit_disk" "ts_router" {
     tailscale_auth_key = var.tailscale_auth_key
     ssh_pub_key        = trimspace(file("~/.ssh/id_ed25519.pub"))
     routes             = join(",", each.value.routes)
+    accept_routes      = each.value.accept_routes
+    ip_rule_bypass     = each.value.ip_rule_bypass
   })
 
   meta_data = yamlencode({
@@ -36,12 +38,22 @@ resource "libvirt_cloudinit_disk" "ts_router" {
   network_config = yamlencode({
     version = 2
     ethernets = {
-      mainif = {
-        match       = { macaddress = each.value.mac }
-        addresses   = ["${each.value.ip}/24"]
-        gateway4    = each.value.gateway
-        nameservers = { addresses = each.value.dns }
-      }
+      mainif = merge(
+        {
+          match       = { macaddress = each.value.mac }
+          addresses   = ["${each.value.ip}/24"]
+          gateway4    = each.value.gateway
+          nameservers = { addresses = each.value.dns }
+        },
+        each.value.ipv6 ? {
+          accept-ra    = true
+          dhcp6        = true
+          ipv6-privacy = false
+        } : {},
+        length(each.value.static_routes) > 0 ? {
+          routes = [for r in each.value.static_routes : { to = r.dest, via = r.via }]
+        } : {},
+      )
     }
   })
 }

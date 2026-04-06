@@ -12,9 +12,34 @@ write_files:
     content: |
       net.ipv4.ip_forward = 1
       net.ipv6.conf.all.forwarding = 1
+%{ if length(ip_rule_bypass) > 0 ~}
+  - path: /etc/systemd/system/ip-rule-override.service
+    content: |
+      [Unit]
+      Description=Add ip rule overrides before Tailscale table 52
+      After=network-online.target
+      Before=tailscaled.service
+
+      [Service]
+      Type=oneshot
+      RemainAfterExit=yes
+%{ for cidr in ip_rule_bypass ~}
+      ExecStart=/sbin/ip rule add to ${cidr} priority 2500 lookup main
+%{ endfor ~}
+%{ for cidr in ip_rule_bypass ~}
+      ExecStop=/sbin/ip rule del to ${cidr} priority 2500 lookup main
+%{ endfor ~}
+
+      [Install]
+      WantedBy=multi-user.target
+%{ endif ~}
 
 runcmd:
   - sysctl -p /etc/sysctl.d/99-tailscale.conf
   - curl -fsSL https://tailscale.com/install.sh | sh
   - systemctl enable --now tailscaled
-  - tailscale up --authkey="${tailscale_auth_key}" --advertise-routes=${routes} --accept-dns=false --hostname=${hostname}
+  - tailscale up --authkey="${tailscale_auth_key}" --advertise-routes=${routes} --accept-dns=false --hostname=${hostname}%{ if accept_routes } --accept-routes%{ endif }
+%{ if length(ip_rule_bypass) > 0 ~}
+  - systemctl daemon-reload
+  - systemctl enable --now ip-rule-override.service
+%{ endif ~}
