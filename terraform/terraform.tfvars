@@ -57,14 +57,16 @@ ts_routers = {
     accept_routes  = true
     static_routes  = [{ dest = "192.168.2.0/24", via = "192.168.50.1" }]
     ip_rule_bypass = ["192.168.2.0/24"]
+    exit_node      = true
   }
   router-2 = {
-    ip      = "192.168.2.10"
-    mac     = "52:54:00:bb:02:0a"
-    bridge  = "br0"
-    gateway = "192.168.2.38"
-    dns     = ["198.18.0.2", "1.1.1.1"]
-    routes  = ["192.168.2.0/24"]
+    ip        = "192.168.2.10"
+    mac       = "52:54:00:bb:02:0a"
+    bridge    = "br0"
+    gateway   = "192.168.2.38"
+    dns       = ["198.18.0.2", "1.1.1.1"]
+    routes    = ["192.168.2.0/24"]
+    exit_node = true
   }
 }
 

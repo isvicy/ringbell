@@ -28,6 +28,7 @@ resource "libvirt_cloudinit_disk" "ts_router" {
     routes             = join(",", each.value.routes)
     accept_routes      = each.value.accept_routes
     ip_rule_bypass     = each.value.ip_rule_bypass
+    exit_node          = each.value.exit_node
   })
 
   meta_data = yamlencode({

@@ -38,7 +38,7 @@ runcmd:
   - sysctl -p /etc/sysctl.d/99-tailscale.conf
   - curl -fsSL https://tailscale.com/install.sh | sh
   - systemctl enable --now tailscaled
-  - tailscale up --authkey="${tailscale_auth_key}" --advertise-routes=${routes} --accept-dns=false --hostname=${hostname}%{ if accept_routes } --accept-routes%{ endif }
+  - tailscale up --authkey="${tailscale_auth_key}" --advertise-routes=${routes} --accept-dns=false --hostname=${hostname}%{ if accept_routes } --accept-routes%{ endif }%{ if exit_node } --advertise-exit-node%{ endif }
 %{ if length(ip_rule_bypass) > 0 ~}
   - systemctl daemon-reload
   - systemctl enable --now ip-rule-override.service
