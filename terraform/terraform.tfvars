@@ -12,7 +12,7 @@ talos_image_local_path = "./images/talos-amd64.qcow2"
 # Networking
 bridge_name = "br0"
 api_vip     = "192.168.2.20"
-gateway     = "192.168.2.38"
+gateway     = "192.168.2.34"
 dns_servers = ["198.18.0.2"]
 cidr        = 24
 
@@ -63,7 +63,7 @@ ts_routers = {
     ip        = "192.168.2.10"
     mac       = "52:54:00:bb:02:0a"
     bridge    = "br0"
-    gateway   = "192.168.2.38"
+    gateway   = "192.168.2.34"
     dns       = ["198.18.0.2", "1.1.1.1"]
     routes    = ["192.168.2.0/24"]
     exit_node = true
