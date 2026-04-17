@@ -18,3 +18,4 @@ resources:
   - helm/metrics-server.yaml
   - helm/influxdata.yaml
   - helm/grafana.yaml
+  - helm/forgejo.yaml

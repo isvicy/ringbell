@@ -34,6 +34,10 @@ data:
             href: https://harbor.ringbell.cc
             description: Container Registry
             icon: harbor
+        - Forgejo:
+            href: https://git.ringbell.cc
+            description: Self-hosted Git
+            icon: forgejo
         - Proxmox VE:
             href: https://proxmox.ringbell.cc
             description: Hypervisor Management
