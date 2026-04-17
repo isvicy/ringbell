@@ -74,9 +74,20 @@ spec:
           existingSecret: forgejo-oauth
           autoDiscoverUrl: https://auth.ringbell.cc/.well-known/openid-configuration
 
+      additionalConfigFromEnvs:
+        - name: FORGEJO__database__PASSWD
+          valueFrom:
+            secretKeyRef:
+              name: forgejo-postgres
+              key: password
+
       config:
         database:
-          DB_TYPE: sqlite3
+          DB_TYPE: postgres
+          HOST: forgejo-postgres:5432
+          NAME: forgejo
+          USER: forgejo
+          SSL_MODE: disable
         server:
           DOMAIN: git.ringbell.cc
           ROOT_URL: https://git.ringbell.cc
