@@ -13,6 +13,9 @@ data:
       Infrastructure:
         style: row
         columns: 5
+      VCS:
+        style: row
+        columns: 2
       KVM:
         style: row
         columns: 3
@@ -34,14 +37,6 @@ data:
             href: https://harbor.ringbell.cc
             description: Container Registry
             icon: harbor
-        - Forgejo:
-            href: https://git.ringbell.cc
-            description: Self-hosted Git
-            icon: forgejo
-        - Gitea Mirror:
-            href: https://mirror.ringbell.cc
-            description: GitHub → Forgejo mirror
-            icon: mdi-source-repository-multiple
         - Proxmox VE:
             href: https://proxmox.ringbell.cc
             description: Hypervisor Management
@@ -54,6 +49,15 @@ data:
             href: https://unraid.ringbell.cc
             description: Unraid Server
             icon: unraid
+    - VCS:
+        - Forgejo:
+            href: https://git.ringbell.cc
+            description: Self-hosted Git
+            icon: forgejo
+        - Gitea Mirror:
+            href: https://mirror.ringbell.cc
+            description: GitHub → Forgejo mirror
+            icon: mdi-source-repository-multiple
     - KVM:
         - Mac Mini:
             href: https://kvm-macmini.ringbell.cc
