@@ -48,7 +48,7 @@ spec:
       terminationGracePeriodSeconds: 60
       containers:
         - name: gitea-mirror
-          image: ghcr.io/raylabshq/gitea-mirror:3.7.2
+          image: ghcr.io/raylabshq/gitea-mirror:v3.15.2
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
