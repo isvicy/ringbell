@@ -17,14 +17,6 @@ data:
       reverse_proxy authelia.auth.svc.cluster.local:80
     }
 
-    http://home-tunnel.ringbell.cc {
-      forward_auth authelia.auth.svc.cluster.local:80 {
-        uri /api/authz/forward-auth
-        copy_headers Remote-User Remote-Groups Remote-Email Remote-Name
-      }
-      reverse_proxy homepage.dashboard.svc.cluster.local:3000
-    }
-
     http://harbor-tunnel.ringbell.cc {
       reverse_proxy harbor.registry.svc.cluster.local:80
     }

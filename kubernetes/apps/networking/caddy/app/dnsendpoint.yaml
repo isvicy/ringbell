@@ -12,13 +12,6 @@ spec:
       providerSpecific:
         - name: external-dns.alpha.kubernetes.io/cloudflare-proxied
           value: "true"
-    - dnsName: home-tunnel.ringbell.cc
-      recordType: CNAME
-      targets:
-        - 632934dd-f7ca-456e-92eb-dacfb5043624.cfargotunnel.com
-      providerSpecific:
-        - name: external-dns.alpha.kubernetes.io/cloudflare-proxied
-          value: "true"
     - dnsName: harbor-tunnel.ringbell.cc
       recordType: CNAME
       targets:
