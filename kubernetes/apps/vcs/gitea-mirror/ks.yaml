@@ -1,0 +1,24 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: gitea-mirror
+  namespace: flux-system
+spec:
+  targetNamespace: vcs
+  path: ./kubernetes/apps/vcs/gitea-mirror/app
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  interval: 30m
+  retryInterval: 1m
+  timeout: 5m
+  prune: true
+  wait: true
+  dependsOn:
+    - name: forgejo
+    - name: external-secrets-store
+  postBuild:
+    substituteFrom:
+      - kind: ConfigMap
+        name: cluster-settings

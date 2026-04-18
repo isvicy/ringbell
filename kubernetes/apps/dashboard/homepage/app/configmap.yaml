@@ -38,6 +38,10 @@ data:
             href: https://git.ringbell.cc
             description: Self-hosted Git
             icon: forgejo
+        - Gitea Mirror:
+            href: https://mirror.ringbell.cc
+            description: GitHub → Forgejo mirror
+            icon: mdi-source-repository-multiple
         - Proxmox VE:
             href: https://proxmox.ringbell.cc
             description: Hypervisor Management
