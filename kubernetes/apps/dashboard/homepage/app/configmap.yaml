@@ -12,7 +12,10 @@ data:
     layout:
       Infrastructure:
         style: row
-        columns: 5
+        columns: 3
+      NAS:
+        style: row
+        columns: 3
       VCS:
         style: row
         columns: 2
@@ -37,10 +40,7 @@ data:
             href: https://harbor.ringbell.cc
             description: Container Registry
             icon: harbor
-        - Proxmox VE:
-            href: https://proxmox.ringbell.cc
-            description: Hypervisor Management
-            icon: proxmox
+    - NAS:
         - Synology NAS:
             href: https://nas.ringbell.cc
             description: Synology DSM
@@ -49,6 +49,10 @@ data:
             href: https://unraid.ringbell.cc
             description: Unraid Server
             icon: unraid
+        - Proxmox VE:
+            href: https://proxmox.ringbell.cc
+            description: Hypervisor Management
+            icon: proxmox
     - VCS:
         - Forgejo:
             href: https://git.ringbell.cc
