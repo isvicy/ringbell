@@ -29,6 +29,7 @@ spec:
         syncOptions:
           - ServerSideApply=true
           - ApplyOutOfSyncOnly=true
+          - RespectIgnoreDifferences=true
   # templatePatch builds source(s) per app type:
   #   helm      -> chart (native) + optional app/resources kustomize (raw manifests)
   #   kustomize -> app/ directory
