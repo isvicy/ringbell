@@ -34,6 +34,11 @@ alertmanager:
             requests:
               storage: 1Gi
 grafana:
+  # Admin credentials from the grafana-admin Secret (1Password) instead of a
+  # chart-generated random password — stops the admin-password churn. Primary
+  # auth is Authelia SSO; this local admin is break-glass.
+  admin:
+    existingSecret: grafana-admin
   defaultDashboardsEnabled: true
   rbac:
     create: true
