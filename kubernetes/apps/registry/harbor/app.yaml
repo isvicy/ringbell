@@ -26,3 +26,18 @@ ignoreDifferences:
     namespace: registry
     name: harbor-registry-htpasswd
     jsonPointers: ["/data"]
+  - kind: Deployment
+    namespace: registry
+    name: harbor-core
+    jsonPointers:
+      - /spec/template/metadata/annotations
+  - kind: Deployment
+    namespace: registry
+    name: harbor-jobservice
+    jsonPointers:
+      - /spec/template/metadata/annotations
+  - kind: Deployment
+    namespace: registry
+    name: harbor-registry
+    jsonPointers:
+      - /spec/template/metadata/annotations
