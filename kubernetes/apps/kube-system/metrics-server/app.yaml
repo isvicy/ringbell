@@ -2,7 +2,7 @@ name: metrics-server
 namespace: kube-system
 wave: 0
 type: helm
-adopted: false
+adopted: true
 repoURL: https://kubernetes-sigs.github.io/metrics-server
 chart: metrics-server
 version: "3.13.0"
