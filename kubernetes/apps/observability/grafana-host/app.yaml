@@ -2,4 +2,4 @@ name: grafana-host
 namespace: observability
 wave: 0
 type: kustomize
-adopted: false
+adopted: true

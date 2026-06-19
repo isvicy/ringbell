@@ -2,4 +2,4 @@ name: priority-classes
 namespace: kube-system
 wave: 0
 type: kustomize
-adopted: false
+adopted: true

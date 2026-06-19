@@ -2,4 +2,4 @@ name: unraid
 namespace: networking
 wave: 0
 type: kustomize
-adopted: false
+adopted: true

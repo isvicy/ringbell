@@ -2,7 +2,7 @@ name: cert-manager
 namespace: cert-manager
 wave: 0
 type: helm
-adopted: false
+adopted: true
 repoURL: https://charts.jetstack.io
 chart: cert-manager
 version: "1.17.2"
