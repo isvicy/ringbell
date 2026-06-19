@@ -16,6 +16,27 @@ configs:
     # rather than the app.kubernetes.io/instance label (Helm charts already set it).
     application.resourceTrackingMethod: annotation
 
+    # --- SSO via Authelia (OIDC) ---
+    # Web UI = confidential `argocd` client; CLI (`argocd login --sso`) = public
+    # `argocd-cli` client (PKCE). Argo CD cannot combine PKCE with a client secret
+    # on one client (argoproj/argo-cd#23773), hence the two-client split.
+    # clientSecret resolves from the ESO-synced argocd-oidc Secret (see extraObjects);
+    # groups ride in the id_token (Authelia claims_policy) for RBAC.
+    oidc.config: |
+      name: Authelia
+      issuer: https://auth.ringbell.cc
+      clientID: argocd
+      clientSecret: $argocd-oidc:clientSecret
+      cliClientID: argocd-cli
+      requestedScopes:
+        - openid
+        - profile
+        - email
+        - groups
+      requestedIDTokenClaims:
+        groups:
+          essential: true
+
     # --- custom health for CRDs Argo cannot assess natively ---
     resource.customizations.health.ceph.rook.io_CephCluster: |
       local hs = {}
@@ -71,3 +92,55 @@ configs:
       hs.status = "Progressing"
       hs.message = "Waiting for Gateway to be Programmed"
       return hs
+
+  rbac:
+    # Authenticated SSO users get read-only; the `admins` Authelia group (already
+    # used by Grafana) is granted full admin. RBAC matches on the groups claim.
+    policy.default: role:readonly
+    scopes: '[groups]'
+    policy.csv: |
+      g, admins, role:admin
+
+extraObjects:
+  # OIDC client secret synced from 1Password (item `argocd`, field oidc-client-secret).
+  # The app.kubernetes.io/part-of: argocd label lets argocd-cm reference it via
+  # $argocd-oidc:clientSecret.
+  - apiVersion: external-secrets.io/v1
+    kind: ExternalSecret
+    metadata:
+      name: argocd-oidc
+      namespace: argocd
+    spec:
+      refreshInterval: 1h
+      secretStoreRef:
+        kind: ClusterSecretStore
+        name: onepassword
+      target:
+        name: argocd-oidc
+        creationPolicy: Owner
+        template:
+          metadata:
+            labels:
+              app.kubernetes.io/part-of: argocd
+      data:
+        - secretKey: clientSecret
+          remoteRef:
+            key: argocd
+            property: oidc-client-secret
+  # LAN access: external-dns creates a DNS-only A record for argocd.ringbell.cc
+  # at the internal Cilium gateway; TLS terminates there (argocd-server runs insecure).
+  - apiVersion: gateway.networking.k8s.io/v1
+    kind: HTTPRoute
+    metadata:
+      name: argocd
+      namespace: argocd
+    spec:
+      hostnames:
+        - argocd.ringbell.cc
+      parentRefs:
+        - name: internal
+          namespace: networking
+      rules:
+        - backendRefs:
+            - name: argocd-server
+              port: 80

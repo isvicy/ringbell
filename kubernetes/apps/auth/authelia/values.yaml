@@ -191,6 +191,49 @@ configMap:
             - code
           userinfo_signed_response_alg: none
           token_endpoint_auth_method: client_secret_basic
+        - client_id: argocd
+          client_name: Argo CD
+          client_secret: '$pbkdf2-sha512$310000$E1IkdI/RYEODq9cEHryj9g$1IV7NyWAI5ORx77j2YKwlzHE5swhNKwchJzkmU.fAId2Q5s0B4o7tQYfAEW21/BpVRmTOi16X9KUHGTSajEn3Q'
+          public: false
+          authorization_policy: one_factor
+          claims_policy: grafana
+          require_pkce: false
+          redirect_uris:
+            - https://argocd.ringbell.cc/auth/callback
+          scopes:
+            - openid
+            - profile
+            - email
+            - groups
+          grant_types:
+            - authorization_code
+            - refresh_token
+          response_types:
+            - code
+          userinfo_signed_response_alg: none
+          token_endpoint_auth_method: client_secret_basic
+        - client_id: argocd-cli
+          client_name: Argo CD (CLI)
+          public: true
+          authorization_policy: one_factor
+          claims_policy: grafana
+          require_pkce: true
+          pkce_challenge_method: S256
+          redirect_uris:
+            - http://localhost:8085/auth/callback
+          scopes:
+            - openid
+            - offline_access
+            - profile
+            - email
+            - groups
+          grant_types:
+            - authorization_code
+            - refresh_token
+          response_types:
+            - code
+          userinfo_signed_response_alg: none
+          token_endpoint_auth_method: none
   access_control:
     default_policy: one_factor
     rules:
