@@ -2,7 +2,7 @@ name: cilium
 namespace: kube-system
 wave: 1
 type: helm
-adopted: false
+adopted: true
 repoURL: https://helm.cilium.io
 chart: cilium
 version: "1.19.2"

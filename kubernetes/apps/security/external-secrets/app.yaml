@@ -2,7 +2,7 @@ name: external-secrets
 namespace: security
 wave: 1
 type: helm
-adopted: false
+adopted: true
 repoURL: https://charts.external-secrets.io
 chart: external-secrets
 version: "2.2.0"
