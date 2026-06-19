@@ -7,37 +7,3 @@ repoURL: https://helm.goharbor.io
 chart: harbor
 version: "1.18.3"
 resources: true
-# harbor chart generates these internal secrets at render time; preserve them
-# so adoption doesn't rotate registry/core/jobservice credentials.
-ignoreDifferences:
-  - kind: Secret
-    namespace: registry
-    name: harbor-core
-    jsonPointers: ["/data"]
-  - kind: Secret
-    namespace: registry
-    name: harbor-jobservice
-    jsonPointers: ["/data"]
-  - kind: Secret
-    namespace: registry
-    name: harbor-registry
-    jsonPointers: ["/data"]
-  - kind: Secret
-    namespace: registry
-    name: harbor-registry-htpasswd
-    jsonPointers: ["/data"]
-  - kind: Deployment
-    namespace: registry
-    name: harbor-core
-    jsonPointers:
-      - /spec/template/metadata/annotations
-  - kind: Deployment
-    namespace: registry
-    name: harbor-jobservice
-    jsonPointers:
-      - /spec/template/metadata/annotations
-  - kind: Deployment
-    namespace: registry
-    name: harbor-registry
-    jsonPointers:
-      - /spec/template/metadata/annotations
