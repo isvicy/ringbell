@@ -37,12 +37,28 @@ persistence:
       storageClass: local-nvme
       size: 5Gi
 core:
+  # Inter-service secret, XSRF key, and token-service cert come from the
+  # harbor-internal Secret (1Password) instead of chart random-generation —
+  # this is what stops the checksum churn that forced registry rolls. The keys
+  # default to the chart's expected names (secret / CSRF_KEY / tls.crt+tls.key).
+  existingSecret: harbor-internal
+  existingXsrfSecret: harbor-internal
+  secretName: harbor-internal
   extraEnvVars:
     - name: CONFIG_OVERWRITE_JSON
       valueFrom:
         secretKeyRef:
           name: harbor-secret
           key: CONFIG_OVERWRITE_JSON
+jobservice:
+  # JOBSERVICE_SECRET from harbor-internal (stable, no churn).
+  existingSecret: harbor-internal
+registry:
+  # REGISTRY_HTTP_SECRET + registry credentials (REGISTRY_PASSWD/REGISTRY_HTPASSWD)
+  # from harbor-internal — the htpasswd is now a fixed value, not re-bcrypted per render.
+  existingSecret: harbor-internal
+  credentials:
+    existingSecret: harbor-internal
 logLevel: info
 trivy:
   enabled: true
