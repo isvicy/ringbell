@@ -7,6 +7,10 @@ configs:
   params:
     # TLS is terminated upstream at the Cilium Gateway; run argocd-server insecure.
     server.insecure: true
+    # SSA-based diff: without it, Gateway API HTTPRoute (and other CRDs the API
+    # server applies defaults to) show perpetual OutOfSync from those default
+    # fields. ServerSideDiff computes the diff via an apply dry-run instead.
+    controller.diff.server.side: "true"
   cm:
     # Adopt Flux-created resources without churn: track ownership via annotation
     # rather than the app.kubernetes.io/instance label (Helm charts already set it).
