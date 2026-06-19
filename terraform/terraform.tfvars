@@ -47,16 +47,19 @@ hdd_pools = {
 # Tailscale subnet routers
 ts_routers = {
   router-50 = {
-    ip             = "192.168.50.10"
-    mac            = "52:54:00:bb:32:0a"
-    bridge         = "br2"
-    gateway        = "192.168.50.1"
-    dns            = ["192.168.50.1", "1.1.1.1"]
-    routes         = ["192.168.50.0/24"]
-    ipv6           = true
-    accept_routes  = true
-    static_routes  = [{ dest = "192.168.2.0/24", via = "192.168.50.1" }]
-    ip_rule_bypass = ["192.168.2.0/24"]
+    ip            = "192.168.50.10"
+    mac           = "52:54:00:bb:32:0a"
+    bridge        = "br2"
+    gateway       = "192.168.50.1"
+    dns           = ["192.168.50.1", "1.1.1.1"]
+    routes        = ["192.168.50.0/24"]
+    ipv6          = true
+    accept_routes = true
+    static_routes = [{ dest = "192.168.2.0/24", via = "192.168.50.1" }]
+    # Tailscale >=1.x installs self-advertised routes into table 52, which would
+    # blackhole local-subnet traffic (e.g. SYN-ACK to the L2 router's WAN IP
+    # 192.168.50.245). Bypass both the L2 LAN and the local L1 subnet to main.
+    ip_rule_bypass = ["192.168.2.0/24", "192.168.50.0/24"]
     exit_node      = true
   }
   router-2 = {

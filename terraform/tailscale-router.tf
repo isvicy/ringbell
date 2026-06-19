@@ -63,8 +63,8 @@ resource "libvirt_domain" "ts_router" {
   for_each = var.ts_routers
 
   name      = each.key
-  vcpu      = 1
-  memory    = 512
+  vcpu      = each.value.vcpu
+  memory    = each.value.memory_mb
   autostart = true
 
   cpu { mode = "host-passthrough" }
@@ -82,6 +82,17 @@ resource "libvirt_domain" "ts_router" {
     type        = "pty"
     target_type = "serial"
     target_port = "0"
+  }
+
+  # Force the running qemu process to actually pick up new disks. Without this,
+  # destroying the underlying volume/cloudinit_disk only unlinks the files —
+  # qemu keeps the old contents via still-open file descriptors and never reads
+  # the freshly-created replacements.
+  lifecycle {
+    replace_triggered_by = [
+      libvirt_volume.ts_router_root[each.key],
+      libvirt_cloudinit_disk.ts_router[each.key],
+    ]
   }
 }
 

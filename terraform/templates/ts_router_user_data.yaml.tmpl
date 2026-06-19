@@ -36,7 +36,14 @@ write_files:
 
 runcmd:
   - sysctl -p /etc/sysctl.d/99-tailscale.conf
-  - curl -fsSL https://tailscale.com/install.sh | sh
+  # Lean tailscale install: avoids a full `apt-get update` over the slow Debian
+  # mirrors by only refreshing the tailscale apt source. The official
+  # tailscale.com/install.sh runs a bulk `apt-get update` which fetches ~9 MB
+  # of Debian Sources/Translations and hangs on bandwidth-constrained networks.
+  - curl -fsSL https://pkgs.tailscale.com/stable/debian/bookworm.noarmor.gpg | tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null
+  - echo 'deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/debian bookworm main' > /etc/apt/sources.list.d/tailscale.list
+  - apt-get -o Dir::Etc::sourcelist="sources.list.d/tailscale.list" -o Dir::Etc::sourceparts="-" -o APT::Get::List-Cleanup="0" update
+  - apt-get install -y --no-install-recommends tailscale
   - systemctl enable --now tailscaled
   - tailscale up --authkey="${tailscale_auth_key}" --advertise-routes=${routes} --accept-dns=false --hostname=${hostname}%{ if accept_routes } --accept-routes%{ endif }%{ if exit_node } --advertise-exit-node%{ endif }
 %{ if length(ip_rule_bypass) > 0 ~}

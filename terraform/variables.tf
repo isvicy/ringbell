@@ -62,6 +62,8 @@ variable "ts_routers" {
     static_routes  = optional(list(object({ dest = string, via = string })), [])
     ip_rule_bypass = optional(list(string), [])
     exit_node      = optional(bool, false)
+    vcpu           = optional(number, 2)
+    memory_mb      = optional(number, 4096)
   }))
   default = {}
 }
