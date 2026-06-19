@@ -2,4 +2,4 @@ name: cloudflared
 namespace: networking
 wave: 7
 type: kustomize
-adopted: false
+adopted: true

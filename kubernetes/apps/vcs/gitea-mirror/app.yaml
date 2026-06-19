@@ -2,4 +2,4 @@ name: gitea-mirror
 namespace: vcs
 wave: 7
 type: kustomize
-adopted: false
+adopted: true

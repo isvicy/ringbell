@@ -2,4 +2,4 @@ name: gateways
 namespace: networking
 wave: 4
 type: kustomize
-adopted: false
+adopted: true

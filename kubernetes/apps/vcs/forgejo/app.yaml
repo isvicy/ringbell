@@ -2,7 +2,7 @@ name: forgejo
 namespace: vcs
 wave: 6
 type: helm
-adopted: false
+adopted: true
 repoURL: code.forgejo.org/forgejo-helm
 chart: forgejo
 version: "17.0.0"

@@ -2,7 +2,7 @@ name: alloy
 namespace: observability
 wave: 5
 type: helm
-adopted: false
+adopted: true
 repoURL: https://grafana.github.io/helm-charts
 chart: alloy
 version: "1.6.2"
