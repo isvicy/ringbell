@@ -60,6 +60,9 @@ spec:
         targetRevision: main
         path: {{ $dir }}/app
       {{- end }}
+      {{- if hasKey . "ignoreDifferences" }}
+      ignoreDifferences: {{ .ignoreDifferences | toJson }}
+      {{- end }}
       {{- if .adopted }}
       syncPolicy:
         automated:

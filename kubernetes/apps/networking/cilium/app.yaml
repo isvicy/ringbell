@@ -7,3 +7,26 @@ repoURL: https://helm.cilium.io
 chart: cilium
 version: "1.19.2"
 resources: true
+# cilium Helm-generates these certs/CA at render time and renders the envoy
+# bootstrap JSON non-deterministically; ignore so Argo adopts without churn.
+ignoreDifferences:
+  - kind: Secret
+    namespace: kube-system
+    name: cilium-ca
+    jsonPointers: ["/data"]
+  - kind: Secret
+    namespace: kube-system
+    name: hubble-server-certs
+    jsonPointers: ["/data"]
+  - kind: Secret
+    namespace: kube-system
+    name: hubble-relay-client-certs
+    jsonPointers: ["/data"]
+  - kind: ConfigMap
+    namespace: kube-system
+    name: cilium-envoy-config
+    jsonPointers: ["/data"]
+  - kind: ConfigMap
+    namespace: kube-system
+    name: hubble-relay-config
+    jsonPointers: ["/data"]
