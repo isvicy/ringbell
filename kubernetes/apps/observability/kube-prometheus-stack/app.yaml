@@ -7,3 +7,9 @@ repoURL: https://prometheus-community.github.io/helm-charts
 chart: kube-prometheus-stack
 version: "82.15.1"
 resources: true
+# grafana chart generates a random admin-password (no existingSecret); preserve it.
+ignoreDifferences:
+  - kind: Secret
+    namespace: observability
+    name: kube-prometheus-stack-grafana
+    jsonPointers: ["/data"]
