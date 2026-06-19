@@ -6,4 +6,3 @@ resources:
   - gateways/ks.yaml
   - caddy/ks.yaml
   - cloudflared/ks.yaml
-  - external-dns/ks.yaml

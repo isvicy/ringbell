@@ -2,4 +2,4 @@ name: cert-manager-issuers
 namespace: cert-manager
 wave: 3
 type: kustomize
-adopted: false
+adopted: true

@@ -2,7 +2,7 @@ name: external-dns
 namespace: networking
 wave: 3
 type: helm
-adopted: false
+adopted: true
 repoURL: https://kubernetes-sigs.github.io/external-dns
 chart: external-dns
 version: "1.16.1"

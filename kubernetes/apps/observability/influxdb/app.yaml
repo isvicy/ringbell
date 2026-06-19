@@ -2,7 +2,7 @@ name: influxdb
 namespace: observability
 wave: 3
 type: helm
-adopted: false
+adopted: true
 repoURL: https://helm.influxdata.com
 chart: influxdb
 version: "4.12.5"

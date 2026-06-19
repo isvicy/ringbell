@@ -2,4 +2,4 @@ name: external-secrets-store
 namespace: security
 wave: 2
 type: kustomize
-adopted: false
+adopted: true

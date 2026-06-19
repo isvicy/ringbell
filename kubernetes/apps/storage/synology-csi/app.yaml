@@ -2,7 +2,7 @@ name: synology-csi
 namespace: storage
 wave: 3
 type: helm
-adopted: false
+adopted: true
 repoURL: https://zebernst.github.io/synology-csi-talos
 chart: synology-csi
 version: "0.9.5-pre.4"
