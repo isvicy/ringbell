@@ -1,0 +1,26 @@
+clientInfoSecret:
+  name: client-info-secret
+images:
+  attacher:
+    tag: v4.6.1
+  provisioner:
+    tag: v5.0.1
+  resizer:
+    tag: v1.11.2
+  snapshotter:
+    tag: v7.0.1
+  nodeDriverRegistrar:
+    tag: v2.11.1
+storageClasses:
+  synology-iscsi:
+    isDefault: false
+    reclaimPolicy: Retain
+    volumeBindingMode: WaitForFirstConsumer
+    parameters:
+      protocol: iscsi
+      formatOptions: "-E nodiscard"
+      fstype: ext4
+volumeSnapshotClasses:
+  synology-iscsi:
+    isDefault: false
+    deletionPolicy: Retain

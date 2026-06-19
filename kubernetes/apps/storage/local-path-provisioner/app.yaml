@@ -1,0 +1,5 @@
+name: local-path-provisioner
+namespace: storage
+wave: 0
+type: kustomize
+adopted: false

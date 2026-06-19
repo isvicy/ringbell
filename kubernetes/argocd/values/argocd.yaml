@@ -1,0 +1,69 @@
+---
+# argo-cd Helm chart values — chart 9.5.22 -> Argo CD v3.4.4
+global:
+  domain: argocd.ringbell.cc
+
+configs:
+  params:
+    # TLS is terminated upstream at the Cilium Gateway; run argocd-server insecure.
+    server.insecure: true
+  cm:
+    # Adopt Flux-created resources without churn: track ownership via annotation
+    # rather than the app.kubernetes.io/instance label (Helm charts already set it).
+    application.resourceTrackingMethod: annotation
+
+    # --- custom health for CRDs Argo cannot assess natively ---
+    resource.customizations.health.ceph.rook.io_CephCluster: |
+      local hs = {}
+      if obj.status ~= nil and obj.status.phase ~= nil then
+        hs.status = "Progressing"
+        hs.message = obj.status.phase
+        if obj.status.ceph ~= nil and obj.status.ceph.health ~= nil then
+          hs.message = obj.status.phase .. " / " .. obj.status.ceph.health
+          if obj.status.ceph.health == "HEALTH_ERR" then
+            hs.status = "Degraded"
+            return hs
+          end
+        end
+        if obj.status.phase == "Ready" then
+          hs.status = "Healthy"
+        end
+        return hs
+      end
+      hs.status = "Progressing"
+      hs.message = "Waiting for CephCluster status"
+      return hs
+    resource.customizations.health.ceph.rook.io_CephBlockPool: |
+      local hs = {}
+      if obj.status ~= nil and obj.status.phase == "Ready" then
+        hs.status = "Healthy"
+        hs.message = "Ready"
+        return hs
+      end
+      hs.status = "Progressing"
+      hs.message = "Waiting for CephBlockPool"
+      return hs
+    resource.customizations.health.ceph.rook.io_CephFilesystem: |
+      local hs = {}
+      if obj.status ~= nil and obj.status.phase == "Ready" then
+        hs.status = "Healthy"
+        hs.message = "Ready"
+        return hs
+      end
+      hs.status = "Progressing"
+      hs.message = "Waiting for CephFilesystem"
+      return hs
+    resource.customizations.health.gateway.networking.k8s.io_Gateway: |
+      local hs = {}
+      if obj.status ~= nil and obj.status.conditions ~= nil then
+        for _, c in ipairs(obj.status.conditions) do
+          if c.type == "Programmed" and c.status == "True" then
+            hs.status = "Healthy"
+            hs.message = c.message or "Programmed"
+            return hs
+          end
+        end
+      end
+      hs.status = "Progressing"
+      hs.message = "Waiting for Gateway to be Programmed"
+      return hs

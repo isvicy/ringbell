@@ -1,0 +1,8 @@
+name: nfs-provisioner
+namespace: storage
+wave: 0
+type: helm
+adopted: false
+repoURL: https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner
+chart: nfs-subdir-external-provisioner
+version: "4.0.18"

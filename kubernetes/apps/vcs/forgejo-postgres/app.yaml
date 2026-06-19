@@ -1,0 +1,8 @@
+name: forgejo-postgres
+namespace: vcs
+wave: 5
+type: helm
+adopted: false
+repoURL: registry-1.docker.io/bitnamicharts
+chart: postgresql
+version: "18.5.24"

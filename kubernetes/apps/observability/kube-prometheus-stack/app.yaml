@@ -1,0 +1,9 @@
+name: kube-prometheus-stack
+namespace: observability
+wave: 3
+type: helm
+adopted: false
+repoURL: https://prometheus-community.github.io/helm-charts
+chart: kube-prometheus-stack
+version: "82.15.1"
+resources: true

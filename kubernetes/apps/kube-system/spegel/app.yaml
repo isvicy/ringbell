@@ -1,0 +1,8 @@
+name: spegel
+namespace: kube-system
+wave: 0
+type: helm
+adopted: false
+repoURL: ghcr.io/spegel-org/helm-charts
+chart: spegel
+version: "0.6.0"

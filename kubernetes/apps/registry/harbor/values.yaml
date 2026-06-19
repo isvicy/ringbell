@@ -1,0 +1,46 @@
+expose:
+  type: clusterIP
+  tls:
+    enabled: false
+  clusterIP:
+    name: harbor
+    ports:
+      httpPort: 80
+externalURL: https://harbor.ringbell.cc
+existingSecretAdminPassword: harbor-secret
+existingSecretAdminPasswordKey: HARBOR_ADMIN_PASSWORD
+existingSecretSecretKey: harbor-secret
+persistence:
+  enabled: true
+  resourcePolicy: "keep"
+  persistentVolumeClaim:
+    registry:
+      storageClass: ceph-bulk
+      size: 50Gi
+    database:
+      storageClass: local-nvme
+      size: 2Gi
+    redis:
+      storageClass: local-nvme
+      size: 1Gi
+    jobservice:
+      jobLog:
+        storageClass: local-nvme
+        size: 1Gi
+    trivy:
+      storageClass: local-nvme
+      size: 5Gi
+core:
+  extraEnvVars:
+    - name: CONFIG_OVERWRITE_JSON
+      valueFrom:
+        secretKeyRef:
+          name: harbor-secret
+          key: CONFIG_OVERWRITE_JSON
+logLevel: info
+trivy:
+  enabled: true
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true

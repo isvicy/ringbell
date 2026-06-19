@@ -1,0 +1,5 @@
+csi:
+  enableRbdDriver: true
+  enableCephfsDriver: false
+monitoring:
+  enabled: true

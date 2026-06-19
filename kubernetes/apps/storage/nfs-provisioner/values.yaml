@@ -1,0 +1,12 @@
+nfs:
+  server: 192.168.2.200
+  path: /mnt/user/kubernetes
+  mountOptions:
+    - nfsvers=4.2
+    - hard
+    - noatime
+storageClass:
+  name: nfs-unraid
+  defaultClass: false
+  reclaimPolicy: Retain
+  archiveOnDelete: true

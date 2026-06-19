@@ -1,0 +1,25 @@
+---
+# Cluster namespaces (with PodSecurity labels). Applied early and never pruned
+# so adopting/removing app workloads can never cascade into a namespace delete.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: namespaces
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: homelab
+  source:
+    repoURL: https://github.com/isvicy/ringbell.git
+    targetRevision: main
+    path: kubernetes/argocd/namespaces
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true

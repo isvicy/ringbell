@@ -1,0 +1,5 @@
+name: gateway-api
+namespace: kube-system
+wave: 0
+type: kustomize
+adopted: false

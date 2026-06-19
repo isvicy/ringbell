@@ -1,0 +1,21 @@
+provider:
+  name: cloudflare
+env:
+  - name: CF_API_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: cloudflare-api-token
+        key: api-token
+domainFilters:
+  - ringbell.cc
+policy: sync
+sources:
+  - gateway-httproute
+  - gateway-grpcroute
+  - gateway-tlsroute
+  - service
+  - crd
+extraArgs:
+  - --crd-source-apiversion=externaldns.k8s.io/v1alpha1
+  - --crd-source-kind=DNSEndpoint
+txtOwnerId: ringbell

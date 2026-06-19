@@ -1,0 +1,9 @@
+name: rook-ceph-cluster
+namespace: storage
+wave: 1
+type: helm
+adopted: false
+repoURL: https://charts.rook.io/release
+chart: rook-ceph-cluster
+version: "1.16.5"
+resources: true

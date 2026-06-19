@@ -1,0 +1,8 @@
+name: rook-ceph
+namespace: storage
+wave: 0
+type: helm
+adopted: false
+repoURL: https://charts.rook.io/release
+chart: rook-ceph
+version: "1.16.5"

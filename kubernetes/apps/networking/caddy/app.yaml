@@ -1,0 +1,5 @@
+name: caddy
+namespace: networking
+wave: 6
+type: kustomize
+adopted: false

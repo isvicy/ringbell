@@ -1,0 +1,5 @@
+name: homepage
+namespace: dashboard
+wave: 6
+type: kustomize
+adopted: false

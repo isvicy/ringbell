@@ -1,0 +1,8 @@
+name: loki
+namespace: observability
+wave: 4
+type: helm
+adopted: false
+repoURL: https://grafana.github.io/helm-charts
+chart: loki
+version: "6.55.0"

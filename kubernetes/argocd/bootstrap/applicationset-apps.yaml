@@ -1,0 +1,68 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: homelab
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions:
+    - missingkey=error
+  generators:
+    - git:
+        repoURL: https://github.com/isvicy/ringbell.git
+        revision: main
+        files:
+          - path: kubernetes/apps/*/*/app.yaml
+  template:
+    metadata:
+      name: "{{ .name }}"
+      namespace: argocd
+      finalizers:
+        - resources-finalizer.argocd.argoproj.io
+    spec:
+      project: homelab
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{ .namespace }}"
+      syncPolicy:
+        syncOptions:
+          - ServerSideApply=true
+          - ApplyOutOfSyncOnly=true
+  # templatePatch builds source(s) per app type:
+  #   helm      -> chart (native) + optional app/resources kustomize (raw manifests)
+  #   kustomize -> app/ directory
+  # automated sync turns on only once an app is marked adopted (Phase 2 cutover).
+  # spec.project is intentionally NOT set here — it is not patchable.
+  templatePatch: |
+    {{- $dir := .path.path | trimPrefix "/" }}
+    spec:
+      {{- if eq .type "helm" }}
+      sources:
+        - repoURL: https://github.com/isvicy/ringbell.git
+          targetRevision: main
+          ref: values
+        - repoURL: {{ .repoURL }}
+          chart: {{ .chart }}
+          targetRevision: "{{ .version }}"
+          helm:
+            releaseName: {{ if hasKey . "releaseName" }}{{ .releaseName }}{{ else }}{{ .name }}{{ end }}
+            valueFiles:
+              - $values/{{ $dir }}/values.yaml
+        {{- if hasKey . "resources" }}
+        - repoURL: https://github.com/isvicy/ringbell.git
+          targetRevision: main
+          path: {{ $dir }}/app/resources
+        {{- end }}
+      {{- else }}
+      source:
+        repoURL: https://github.com/isvicy/ringbell.git
+        targetRevision: main
+        path: {{ $dir }}/app
+      {{- end }}
+      {{- if .adopted }}
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+      {{- end }}

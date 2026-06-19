@@ -1,0 +1,9 @@
+name: authelia
+namespace: auth
+wave: 5
+type: helm
+adopted: false
+repoURL: https://charts.authelia.com
+chart: authelia
+version: "0.10.50"
+resources: true

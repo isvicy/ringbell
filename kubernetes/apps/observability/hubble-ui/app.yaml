@@ -1,0 +1,5 @@
+name: hubble-ui
+namespace: kube-system
+wave: 0
+type: kustomize
+adopted: false

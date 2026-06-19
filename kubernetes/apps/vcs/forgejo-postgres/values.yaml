@@ -1,0 +1,28 @@
+fullnameOverride: forgejo-postgres
+architecture: standalone
+auth:
+  enablePostgresUser: true
+  existingSecret: forgejo-postgres
+  secretKeys:
+    adminPasswordKey: postgres-password
+    userPasswordKey: password
+  username: forgejo
+  database: forgejo
+primary:
+  persistence:
+    enabled: true
+    storageClass: local-nvme
+    size: 20Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 1Gi
+  pgHbaConfiguration: |
+    local all all trust
+    host all all 127.0.0.1/32 md5
+    host all all ::1/128 md5
+    host all all 10.244.0.0/16 md5
+metrics:
+  enabled: false

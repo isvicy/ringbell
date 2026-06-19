@@ -1,0 +1,38 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: homelab
+  namespace: argocd
+spec:
+  description: ringbell homelab workloads
+  sourceRepos:
+    - https://github.com/isvicy/ringbell.git
+    - https://argoproj.github.io/argo-helm
+    - https://charts.authelia.com
+    - https://backube.github.io/helm-charts
+    - registry-1.docker.io/bitnamicharts
+    - https://helm.cilium.io
+    - https://kubernetes-sigs.github.io/external-dns
+    - https://charts.external-secrets.io
+    - code.forgejo.org/forgejo-helm
+    - https://grafana.github.io/helm-charts
+    - https://helm.goharbor.io
+    - https://helm.influxdata.com
+    - https://charts.jetstack.io
+    - https://kubernetes-sigs.github.io/metrics-server
+    - https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner
+    - https://1password.github.io/connect-helm-charts
+    - https://prometheus-community.github.io/helm-charts
+    - https://charts.rook.io/release
+    - ghcr.io/spegel-org/helm-charts
+    - https://zebernst.github.io/synology-csi-talos
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: "*"
+  clusterResourceWhitelist:
+    - group: "*"
+      kind: "*"
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"

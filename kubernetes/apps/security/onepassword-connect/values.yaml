@@ -1,0 +1,5 @@
+connect:
+  credentialsName: onepassword-connect
+  credentialsKey: 1password-credentials.json
+operator:
+  create: false

@@ -1,0 +1,9 @@
+name: harbor
+namespace: registry
+wave: 3
+type: helm
+adopted: false
+repoURL: https://helm.goharbor.io
+chart: harbor
+version: "1.18.3"
+resources: true

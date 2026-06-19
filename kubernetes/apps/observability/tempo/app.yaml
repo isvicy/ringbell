@@ -1,0 +1,8 @@
+name: tempo
+namespace: observability
+wave: 4
+type: helm
+adopted: false
+repoURL: https://grafana.github.io/helm-charts
+chart: tempo
+version: "1.24.4"

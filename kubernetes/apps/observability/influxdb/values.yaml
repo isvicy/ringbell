@@ -1,0 +1,17 @@
+image:
+  tag: "1.11-alpine"
+persistence:
+  enabled: true
+  storageClass: nfs-unraid
+  size: 5Gi
+config:
+  http:
+    enabled: true
+    bind-address: ":8086"
+    auth-enabled: false
+    flux-enabled: true
+initScripts:
+  enabled: true
+  scripts:
+    init.iql: |
+      CREATE DATABASE "GarminStats" WITH DURATION INF REPLICATION 1 NAME "autogen"

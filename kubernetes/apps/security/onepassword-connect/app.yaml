@@ -1,0 +1,8 @@
+name: onepassword-connect
+namespace: security
+wave: 0
+type: helm
+adopted: false
+repoURL: https://1password.github.io/connect-helm-charts
+chart: connect
+version: "2.4.1"
