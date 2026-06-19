@@ -7,6 +7,12 @@ expose:
     ports:
       httpPort: 80
 externalURL: https://harbor.ringbell.cc
+# The registry image-storage PVC is RWO (ceph-bulk). RollingUpdate surges a second
+# registry pod that lands on another node and can't Multi-Attach the volume -> the
+# rollout deadlocks. Recreate tears the old pod down first. (Chart recommends this
+# for volumes without RWM.)
+updateStrategy:
+  type: Recreate
 existingSecretAdminPassword: harbor-secret
 existingSecretAdminPasswordKey: HARBOR_ADMIN_PASSWORD
 existingSecretSecretKey: harbor-secret
