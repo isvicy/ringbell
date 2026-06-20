@@ -4,3 +4,13 @@ kind: Kustomization
 resources:
   - externalsecret.yaml
   - httproute.yaml
+# Argo CD Grafana dashboard (grafana.com 14584) loaded by the grafana sidecar
+# (searchNamespace: ALL). JSON pinned in git — no runtime download dependency.
+configMapGenerator:
+  - name: argocd-grafana-dashboard
+    files:
+      - argocd-dashboard.json
+    options:
+      labels:
+        grafana_dashboard: "1"
+      disableNameSuffixHash: true
