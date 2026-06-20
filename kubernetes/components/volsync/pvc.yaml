@@ -2,14 +2,16 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: ${APP}
+  name: APP
 spec:
   accessModes: ["ReadWriteOnce"]
+  # Auto-restore from the latest backup on a fresh cluster: the PVC populates
+  # itself from the ReplicationDestination instead of starting empty.
   dataSourceRef:
     kind: ReplicationDestination
     apiGroup: volsync.backube
-    name: ${APP}
+    name: APP
   resources:
     requests:
-      storage: ${VOLSYNC_CAPACITY:-5Gi}
-  storageClassName: ${VOLSYNC_STORAGECLASS:-local-nvme}
+      storage: CAPACITY
+  storageClassName: local-nvme

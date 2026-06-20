@@ -1,4 +1,30 @@
 ---
+# Argo-native volsync backup, reusable per-app.
+#
+# Flux used ${APP}/${VOLSYNC_*} postBuild substitution + the cluster-settings
+# ConfigMap. Argo has neither, so per-app values come from a `volsync-config`
+# ConfigMap the consuming app provides, injected via kustomize `replacements`.
+# Shared infra (Garage S3, snapshot class, schedule, retention) is hardcoded.
+#
+# Usage — in a kustomize app's app/kustomization.yaml:
+#
+#   components:
+#     - ../../../../components/volsync
+#   configMapGenerator:
+#     - name: volsync-config
+#       literals:
+#         - app=myapp          # names every resource + the restic repo path
+#         - capacity=10Gi      # data PVC + restore-destination size
+#   generatorOptions:
+#     disableNameSuffixHash: true   # replacements reference it by stable name
+#
+# Creates: data PVC `myapp` (auto-restores from backup on a fresh cluster via
+# dataSourceRef), ReplicationSource `myapp-backup` (6h Restic snapshots to S3),
+# ReplicationDestination `myapp` (manual restore), ExternalSecret with the
+# restic repo creds. The app's pod mounts PVC `myapp`.
+#
+# Targets select by KIND (each kind is unique here) so a name rewrite never
+# breaks a later selector.
 apiVersion: kustomize.config.k8s.io/v1alpha1
 kind: Component
 resources:
@@ -6,3 +32,39 @@ resources:
   - replicationdestination.yaml
   - externalsecret.yaml
   - pvc.yaml
+replacements:
+  - source:
+      kind: ConfigMap
+      name: volsync-config
+      fieldPath: data.app
+    targets:
+      # full-value APP fields
+      - select: { kind: PersistentVolumeClaim }
+        fieldPaths: [metadata.name, spec.dataSourceRef.name]
+      - select: { kind: ReplicationDestination }
+        fieldPaths: [metadata.name]
+      - select: { kind: ReplicationSource }
+        fieldPaths: [spec.sourcePVC]
+      # APP-prefixed names (replace only the first "-" segment)
+      - select: { kind: ExternalSecret }
+        fieldPaths: [metadata.name, spec.target.name]
+        options: { delimiter: "-", index: 0 }
+      - select: { kind: ReplicationSource }
+        fieldPaths: [metadata.name, spec.restic.repository]
+        options: { delimiter: "-", index: 0 }
+      - select: { kind: ReplicationDestination }
+        fieldPaths: [spec.restic.repository]
+        options: { delimiter: "-", index: 0 }
+      # restic S3 path: s3:<host>:<port>/<bucket>/volsync/APP -> APP is segment 3
+      - select: { kind: ExternalSecret }
+        fieldPaths: [spec.target.template.data.RESTIC_REPOSITORY]
+        options: { delimiter: "/", index: 3 }
+  - source:
+      kind: ConfigMap
+      name: volsync-config
+      fieldPath: data.capacity
+    targets:
+      - select: { kind: PersistentVolumeClaim }
+        fieldPaths: [spec.resources.requests.storage]
+      - select: { kind: ReplicationDestination }
+        fieldPaths: [spec.restic.capacity]

@@ -2,20 +2,20 @@
 apiVersion: volsync.backube/v1alpha1
 kind: ReplicationSource
 metadata:
-  name: ${APP}-backup
+  name: APP-backup
 spec:
-  sourcePVC: ${APP}
+  sourcePVC: APP
   trigger:
     schedule: "0 */6 * * *"
   restic:
     pruneIntervalDays: 7
-    repository: ${APP}-volsync-restic
+    repository: APP-volsync-restic
     retain:
       daily: 7
       weekly: 4
       monthly: 3
     copyMethod: Snapshot
-    storageClassName: ${VOLSYNC_STORAGECLASS:-local-nvme}
+    storageClassName: local-nvme
     volumeSnapshotClassName: csi-ceph-blockpool
-    cacheStorageClassName: ${VOLSYNC_CACHE_STORAGECLASS:-local-nvme}
-    cacheCapacity: ${VOLSYNC_CACHE_CAPACITY:-2Gi}
+    cacheStorageClassName: local-nvme
+    cacheCapacity: 2Gi

@@ -17,14 +17,14 @@ kubernetes/
 │   ├── cert-manager/          # cert-manager + ClusterIssuers + wildcard cert (*.ringbell.cc)
 │   ├── dashboard/             # Homepage (K8s service discovery, cluster widgets)
 │   ├── storage/              # Rook-Ceph (+ toolbox), NFS, Synology CSI, snapshots
-│   ├── backup/                # Volsync (DORMANT — see Backups below)
+│   ├── backup/                # Volsync (backup + restore — see Backups below)
 │   ├── kube-system/           # Cilium, Spegel OCI mirror, metrics-server, priority-classes
 │   ├── observability/         # kube-prometheus-stack (Prometheus, Grafana, Alertmanager), loki, tempo, alloy
 │   ├── registry/              # Harbor
 │   ├── vcs/                   # Forgejo (+ postgres), gitea-mirror
 │   └── default/               # E2E storage test (manual, not Argo-managed)
 ├── components/
-│   └── volsync/               # Reusable kustomize component (DORMANT — used Flux ${APP}; needs Argo redesign)
+│   └── volsync/               # Reusable kustomize component (Argo-native; per-app backup opt-in)
 └── docs/
     ├── best-practices.md      # Component comparison with reference homelab
     └── troubleshooting.md     # issues with root cause, fix, prevention
@@ -221,9 +221,40 @@ Two SSO patterns against [Authelia](https://www.authelia.com/) (`auth` ns):
                   └──────────┘
 ```
 
-## Backups (Volsync) — DORMANT
+## Backups (Volsync)
 
-Volsync is installed but the per-app backup wiring is **dormant**: the `components/volsync` kustomize component used Flux's `${APP}` postBuild substitution + the `cluster-settings` ConfigMap, neither of which exists under Argo. It needs an Argo-native redesign (ApplicationSet parameters / per-app values) before backups are active again. Do not rely on it until reworked.
+`components/volsync` is a reusable, **Argo-native** kustomize component for per-app Restic backups to Garage S3. Per-app values (`app`, `capacity`) come from a `volsync-config` ConfigMap injected via kustomize `replacements` (the replacement for Flux's `${APP}` postBuild); shared infra (S3 endpoint, snapshot class, 6h schedule, 7d/4w/3m retention) is baked into the component.
+
+Opt an app in — in its `app/kustomization.yaml`:
+
+```yaml
+components:
+  - ../../../../components/volsync
+configMapGenerator:
+  - name: volsync-config
+    literals:
+      - app=myapp        # names every resource + the restic repo path
+      - capacity=10Gi    # data PVC + restore-destination size
+generatorOptions:
+  disableNameSuffixHash: true   # replacements reference it by stable name
+```
+
+Creates: the app's data PVC `myapp` (auto-restores from the latest backup on a fresh cluster via `dataSourceRef`), `ReplicationSource myapp-backup` (scheduled snapshots), `ReplicationDestination myapp` (manual restore), and the restic-creds ExternalSecret. Mount PVC `myapp` in the app's pod. No app currently opts in.
+
+### Manual Snapshot / Restore
+
+```bash
+# snapshot now
+kubectl -n <ns> annotate replicationsource <app>-backup --overwrite \
+  volsync.backube/trigger=$(date +%s)
+
+# restore: scale down, trigger, wait, scale up
+kubectl -n <ns> scale deploy/<app> --replicas=0
+kubectl -n <ns> patch replicationdestination <app> \
+  --type merge -p '{"spec":{"trigger":{"manual":"restore-'$(date +%s)'"}}}'
+kubectl -n <ns> get replicationdestination <app> -w
+kubectl -n <ns> scale deploy/<app> --replicas=1
+```
 
 ## Secrets
 
