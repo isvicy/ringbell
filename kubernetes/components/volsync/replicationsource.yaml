@@ -15,7 +15,7 @@ spec:
       weekly: 4
       monthly: 3
     copyMethod: Snapshot
-    storageClassName: local-nvme
+    storageClassName: ceph-bulk
     volumeSnapshotClassName: csi-ceph-blockpool
     cacheStorageClassName: local-nvme
     cacheCapacity: 2Gi

@@ -10,7 +10,7 @@ spec:
     repository: APP-volsync-restic
     copyMethod: Snapshot
     volumeSnapshotClassName: csi-ceph-blockpool
-    storageClassName: local-nvme
+    storageClassName: ceph-bulk
     accessModes: ["ReadWriteOnce"]
     capacity: CAPACITY
     cacheStorageClassName: local-nvme
