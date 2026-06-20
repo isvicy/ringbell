@@ -131,7 +131,8 @@ Three storage classes for different use cases:
 
 | StorageClass | Backend | Access | Best For |
 |---|---|---|---|
-| `ceph-block` | Rook-Ceph RBD (2x 180GB SSD) | RWO | App data — fast, replicated across workers |
+| `ceph-bulk` | Rook-Ceph RBD (2× 4TiB OSDs, replica 2) | RWO | App data — replicated across workers |
+| `local-nvme` | local-path (node-local NVMe) | RWO | Fast scratch / single-node data; no replication, `WaitForFirstConsumer` |
 | `nfs-unraid` | Unraid NFS (31TB) | RWX | Bulk/shared data — media, backups, large datasets |
 | `synology-iscsi` | Synology iSCSI (DS918+) | RWO | Data needing NAS-level RAID/snapshot protection |
 
@@ -144,7 +145,7 @@ metadata:
   name: myapp-data
 spec:
   accessModes: ["ReadWriteOnce"]
-  storageClassName: ceph-block    # or nfs-unraid, synology-iscsi
+  storageClassName: ceph-bulk    # or local-nvme, nfs-unraid, synology-iscsi
   resources:
     requests:
       storage: 10Gi
@@ -314,7 +315,7 @@ See `docs/troubleshooting.md` for storage/networking details. Argo CD + this clu
 8. **Cilium needs experimental Gateway API CRDs** — standard channel lacks TLSRoute.
 9. **Cloudflared needs `--protocol http2`** — QUIC blocked in most home networks.
 10. **Rook-Ceph SC parameters** — custom `parameters` replaces chart defaults; must include `csi.storage.k8s.io/*` refs. StorageClass params are immutable — delete + recreate.
-11. **Prometheus must NOT use NFS** — causes WAL corruption; use `ceph-block`.
+11. **Prometheus must NOT use NFS** — causes WAL corruption; use `ceph-bulk`.
 12. **CiliumEnvoyConfig can't inject into Gateway API** — cilium/cilium#26941; use Caddy `forward_auth` for auth.
 13. **Authelia chart secret keys use dot-paths** — e.g. `identity_validation.reset_password.jwt.hmac.key`. Always `helm show values` first.
 14. **The Bash here runs zsh** — `for x in $string` does NOT word-split; use file-based `while read` loops for cluster scripts.
