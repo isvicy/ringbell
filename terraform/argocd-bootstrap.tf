@@ -17,9 +17,17 @@
 #
 # NOT on the live Flux->Argo migration path: the onepassword-connect Secret
 # already exists in the running cluster (Flux created it from secret.sops.yaml).
-# This makes a from-scratch rebuild reproducible. Before relying on it for a real
-# rebuild, confirm the credential encoding matches the live Secret
-# (`kubectl -n security get secret onepassword-connect -o yaml`).
+# This makes a from-scratch rebuild reproducible.
+#
+# Verified 2026-06-20 against the live Secret (hash-compared, no secret printed):
+#   - `token` reproduces BYTE-FOR-BYTE. ESO sends it in the Connect auth header
+#     so exactness matters; `$()` correctly strips the trailing newline `pass`
+#     stores, matching the live value.
+#   - `1password-credentials.json` is a JSON object (deviceUuid / encCredentials /
+#     uniqueKey / verifier / ...) the Connect pod consumes as a MOUNTED FILE. The
+#     live value keeps a trailing newline that `$()` strips, but a JSON parse
+#     ignores it, so the seeded credential is functionally identical. Encoding
+#     confirmed correct (raw values, base64'd into the Secret by kubectl).
 resource "terraform_data" "onepassword_connect_secret" {
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
