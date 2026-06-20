@@ -1,60 +1,64 @@
 # Kubernetes GitOps - ringbell.cc
 
-Homelab Kubernetes cluster managed by [Flux CD](https://fluxcd.io/), running on [Talos Linux](https://www.talos.dev/) VMs (Unraid/libvirt).
+Homelab Kubernetes cluster managed by [Argo CD](https://argo-cd.readthedocs.io/), running on [Talos Linux](https://www.talos.dev/) VMs (Unraid/libvirt). Migrated from Flux CD to Argo CD on 2026-06-20.
 
 ## Architecture
 
 ```
 kubernetes/
-├── bootstrap/flux/         # Flux v2.8.3 bootstrap manifests (gotk-components, gotk-sync)
-├── flux/
-│   ├── config/             # Cluster-level Flux Kustomizations + cluster-settings ConfigMap
-│   └── repositories/helm/  # HelmRepository sources
-├── apps/                   # All workloads, organized by namespace
-│   ├── security/           # 1Password Connect, External Secrets 2.2.0, ClusterSecretStore
-│   ├── networking/         # Cilium, Gateway API, cloudflared, external-dns, Caddy auth proxy
-│   ├── auth/               # Authelia (forward-auth SSO, SQLite on ceph-block)
-│   ├── cert-manager/       # cert-manager + ClusterIssuers + wildcard cert (*.ringbell.cc)
-│   ├── dashboard/          # Homepage (K8s service discovery, cluster widgets)
-│   ├── storage/            # Rook-Ceph (+ toolbox + dashboard), NFS, Synology CSI, snapshots
-│   ├── backup/             # Volsync (backup + restore)
-│   ├── kube-system/        # Spegel OCI registry mirror, metrics-server
-│   ├── observability/      # kube-prometheus-stack (Prometheus, Grafana, Alertmanager)
-│   ├── flux-system/        # PriorityClasses
-│   └── default/            # E2E storage test (manual, not Flux-managed)
+├── argocd/                    # Argo CD control plane (installed once, then self-managed)
+│   ├── bootstrap/             # AppProject, the `homelab` ApplicationSet, self-managed argocd App, namespaces App
+│   ├── namespaces/            # the app Namespaces (incl. privileged PodSecurity labels)
+│   └── values/argocd.yaml     # argo-cd Helm chart values (tracking, ServerSideDiff, Lua health, SSO, metrics)
+├── apps/                      # All workloads, by namespace; each app = <ns>/<app>/{app.yaml, values.yaml, app/}
+│   ├── security/              # 1Password Connect, External Secrets, ClusterSecretStore
+│   ├── networking/            # Cilium, Gateway API, cloudflared, external-dns, Caddy auth proxy
+│   ├── auth/                  # Authelia (Caddy forward-auth + native OIDC SSO for grafana/harbor/argocd/...)
+│   ├── cert-manager/          # cert-manager + ClusterIssuers + wildcard cert (*.ringbell.cc)
+│   ├── dashboard/             # Homepage (K8s service discovery, cluster widgets)
+│   ├── storage/              # Rook-Ceph (+ toolbox), NFS, Synology CSI, snapshots
+│   ├── backup/                # Volsync (DORMANT — see Backups below)
+│   ├── kube-system/           # Cilium, Spegel OCI mirror, metrics-server, priority-classes
+│   ├── observability/         # kube-prometheus-stack (Prometheus, Grafana, Alertmanager), loki, tempo, alloy
+│   ├── registry/              # Harbor
+│   ├── vcs/                   # Forgejo (+ postgres), gitea-mirror
+│   └── default/               # E2E storage test (manual, not Argo-managed)
 ├── components/
-│   └── volsync/            # Reusable kustomize component (backup + restore + PVC)
+│   └── volsync/               # Reusable kustomize component (DORMANT — used Flux ${APP}; needs Argo redesign)
 └── docs/
-    ├── best-practices.md   # Component comparison with reference homelab
-    └── troubleshooting.md  # 13 issues with root cause, fix, prevention
+    ├── best-practices.md      # Component comparison with reference homelab
+    └── troubleshooting.md     # issues with root cause, fix, prevention
 ```
 
-### Flux Dependency Graph
+### How apps are defined (ApplicationSet)
 
+A single `homelab` **ApplicationSet** (git *files* generator, `goTemplate` + `templatePatch`) generates one Argo `Application` per `app.yaml`. Drop in a new app by adding a directory under `apps/<ns>/<app>/`:
+
+```yaml
+# apps/<ns>/<app>/app.yaml — metadata the ApplicationSet reads
+name: harbor
+namespace: registry
+wave: 3                  # documents the dependency layer (see below); not a hard gate under autosync
+type: helm               # helm | kustomize
+adopted: true            # true -> the app gets automated {prune, selfHeal}
+repoURL: https://helm.goharbor.io   # helm only
+chart: harbor                        # helm only
+version: "1.18.3"                    # helm only — pinned
+resources: true          # helm only — also render app/resources/ (ExternalSecret, HTTPRoute, CRs)
+# ignoreDifferences:     # optional, per-app (see Gotchas)
 ```
-priority-classes, spegel, nfs-provisioner (no deps)
 
-onepassword-connect
-  └─> external-secrets
-        └─> external-secrets-store (bottleneck: 6 consumers)
-              ├─> cert-manager-issuers
-              ├─> cloudflared (also depends on cilium)
-              ├─> external-dns
-              ├─> synology-csi (also depends on snapshot-controller)
-              ├─> volsync
-              └─> volsync
+- **Helm apps** render native Helm via multi-source: a `$values` ref (this repo's `values.yaml`) + the upstream chart + an optional `app/resources` kustomize source for bundled raw manifests.
+- **Kustomize apps** point at `app/` (a kustomization).
+- Resource tracking is by **annotation** (`application.resourceTrackingMethod: annotation`), so adopting a resource only adds a tracking annotation — no churn.
 
-gateway-api ─> cilium ─> cloudflared
-cert-manager ─> cert-manager-issuers
+### Dependency ordering (waves + convergence)
 
-gateways + external-secrets-store + rook-ceph-cluster ─> authelia
-  ├─> caddy (auth proxy, forward_auth → Authelia)
-  └─> homepage (depends on gateways + authelia)
+Argo CD doesn't use Flux-style `dependsOn`. Cross-app ordering is handled by:
 
-rook-ceph + snapshot-controller ─> rook-ceph-cluster ─> kube-prometheus-stack
-
-metrics-server, spegel (no deps)
-```
+1. **autosync + retry** — each adopted app self-heals; apps whose dependencies aren't ready yet fail and retry until the cluster **converges**.
+2. **`wave`** in `app.yaml` — documents the dependency layer (roughly: namespaces → onepassword-connect → external-secrets → external-secrets-store → cert-manager/storage/network → leaf apps). It's the source label if RollingSync is ever enabled, not a hard gate today.
+3. **Custom Lua health checks** (in `values/argocd.yaml`) for CRDs Argo can't assess natively (CephCluster/CephBlockPool/CephFilesystem, Gateway).
 
 ## Bootstrap (from scratch)
 
@@ -62,41 +66,45 @@ metrics-server, spegel (no deps)
 
 | Item | Where |
 |------|-------|
-| 1Password items | `cloudflare-tunnel`, `cloudflare-api-token`, `synology-csi`, `volsync-restic` in vault `homelab` |
-| SOPS age key | `pass show age/identity` |
-| GitHub token | `pass show github/homelab/token` |
+| 1Password items | app secrets in vault `homelab`; the **Connect** server credential + token at `pass show homelab/connect-server/{credential,token}` |
 | Garage S3 creds | `pass show s3/garage/tf-state/{access,secret}-key` |
 | Cloudflare tunnel | Created via `cloudflared tunnel create ringbell` |
-| Unraid NFS | Share at `192.168.2.200:/mnt/user/kubernetes` (configured via Unraid WebUI) |
-| Synology iSCSI | Service running, user `homelab` created, creds in 1Password |
+| Unraid NFS | Share at `192.168.2.200:/mnt/user/kubernetes` (Unraid WebUI) |
+| Synology iSCSI | Service running, user `homelab`, creds in 1Password |
 
 ### Steps
 
 ```bash
-# 1. Terraform — create Talos VMs
-cd terraform/terraform
+# 1. Terraform — create Talos VMs AND seed the GitOps root-of-trust
+#    (terraform/argocd-bootstrap.tf creates the onepassword-connect Secret from `pass`,
+#     without persisting secret material in TF state)
+cd terraform
 AWS_ACCESS_KEY_ID=$(pass show s3/garage/tf-state/access-key) \
 AWS_SECRET_ACCESS_KEY=$(pass show s3/garage/tf-state/secret-key) \
   terraform init -backend-config=backend.hcl && terraform apply
+# export the kubeconfig: terraform output -raw kubeconfig > /tmp/kc && export KUBECONFIG=/tmp/kc
 
-# 2. Bootstrap Flux
-GITHUB_TOKEN=$(pass show github/homelab/token) flux bootstrap github \
-  --owner=isvicy --repository=ringbell --branch=main \
-  --path=kubernetes/bootstrap/flux --personal --token-auth
+# 2. Install Cilium (CNI) so pods can network and Argo can come up.
+helm install cilium cilium/cilium --version <v> -n kube-system -f kubernetes/apps/networking/cilium/values.yaml
 
-# 3. Create SOPS decryption secret
-pass show age/identity | kubectl create secret generic sops-age \
-  --namespace=flux-system --from-file=age.agekey=/dev/stdin
+# 3. Install Argo CD once (it then manages itself via apps/argocd bootstrap), then seed the control plane.
+helm install argocd argo/argo-cd --version 9.5.22 -n argocd --create-namespace \
+  -f kubernetes/argocd/values/argocd.yaml
+kubectl apply -f kubernetes/argocd/bootstrap/project-homelab.yaml
+kubectl apply -f kubernetes/argocd/bootstrap/app-namespaces.yaml
+kubectl apply -f kubernetes/argocd/bootstrap/applicationset-apps.yaml
+kubectl apply -f kubernetes/argocd/bootstrap/app-argocd.yaml   # self-management
 
-# 4. Verify
-flux get ks -A                              # all Ready
-kubectl get cephcluster -n storage          # HEALTH_OK
-kubectl get hr -A                           # 12 HelmReleases Ready
+# 4. Argo adopts Cilium + reconciles every app.yaml from git. Verify:
+kubectl get applications -n argocd               # all Synced / Healthy
+kubectl config set-context --current --namespace=argocd
+argocd app list --core
+kubectl get cephcluster -n storage               # HEALTH_OK
 ```
 
-### Talos Upgrade (rolling)
+The ringbell repo is **public**, so Argo clones it anonymously — no repo credential needed. Everything else flows from the `onepassword-connect` Secret: External Secrets serves every other secret from the 1Password `homelab` vault.
 
-After changing the factory image or Talos version:
+### Talos Upgrade (rolling)
 
 ```bash
 IMAGE="factory.talos.dev/installer/<schematic>:<version>"
@@ -112,10 +120,8 @@ kubectl -n storage exec deploy/rook-ceph-tools -- ceph osd set noout
 # Workers one at a time, wait for OSD recovery between each
 for ip in 192.168.2.24 192.168.2.25; do
   talosctl --nodes $ip upgrade --image=$IMAGE --timeout=10m
-  # Wait ~60s for OSDs to rejoin
 done
 
-# Unset noout
 kubectl -n storage exec deploy/rook-ceph-tools -- ceph osd unset noout
 ```
 
@@ -181,9 +187,9 @@ spec:
 
 ### Internet Access (via Cloudflare Tunnel)
 
-Tunnel-exposed services are authenticated by Authelia (see [Authentication](#authentication) below). Cloudflared routes all `*.ringbell.cc` tunnel traffic to Caddy, which enforces `forward_auth` before proxying to backends.
+Cloudflared routes all `*.ringbell.cc` tunnel traffic to Caddy. Apps **without** native SSO get Authelia via Caddy `forward_auth`; apps **with** native OIDC (grafana, harbor, argocd, forgejo, proxmox) authenticate against Authelia directly and Caddy just proxies.
 
-Traffic flow: Internet → Cloudflare edge → tunnel → cloudflared → Caddy (`forward_auth` → Authelia) → backend Service
+Traffic flow: Internet → Cloudflare edge → tunnel → cloudflared → Caddy (`forward_auth` → Authelia, or pass-through) → backend Service
 
 To expose a service via tunnel, add a proxied CNAME via Cloudflare API and a backend entry in Caddy's Caddyfile:
 
@@ -199,89 +205,25 @@ curl -X POST "https://api.cloudflare.com/client/v4/zones/47902d03701ff7e82f7c14a
 
 ## Authentication
 
-Tunnel-exposed services are protected by [Authelia](https://www.authelia.com/) forward-auth. LAN access is unauthenticated.
+Two SSO patterns against [Authelia](https://www.authelia.com/) (`auth` ns):
+
+- **Caddy `forward_auth`** — for apps with no native auth. Cloudflared routes `*.ringbell.cc` to Caddy; Caddy enforces `forward_auth` → Authelia before proxying. (CiliumEnvoyConfig *cannot* inject auth into Gateway API proxies — cilium/cilium#26941 — so Caddy does it.)
+- **Native OIDC** — for apps that speak OIDC (grafana, harbor, argocd, forgejo, proxmox). Each is an Authelia OIDC client; the app does the login flow itself. Argo CD uses two clients (`argocd` confidential web + `argocd-cli` public/PKCE) because it can't combine PKCE with a client secret on one client (argoproj/argo-cd#23773).
 
 ```
 ┌──────────┐     ┌──────────┐  forward_auth  ┌──────────┐
 │cloudflared├────►│  Caddy   ├───────────────►│ Authelia  │
 └──────────┘     └────┬─────┘                 └──────────┘
-                      │ (authed)
+                      │ (authed / or app does OIDC itself)
                       ▼
                   ┌──────────┐
                   │ Backend  │
                   └──────────┘
 ```
 
-- **Authelia** (`auth` ns): File-based user store, TOTP 2FA, SQLite session/storage on `ceph-block`. Secrets from 1Password via ExternalSecret.
-- **Caddy** (`networking` ns): Auth proxy with `forward_auth` directive (6 lines per backend). Cloudflared routes `*.ringbell.cc` to Caddy. Config auto-reloads via `--watch`.
-- **Homepage** (`dashboard` ns): Unified dashboard with K8s service discovery and cluster widgets (CPU/memory via metrics-server).
+## Backups (Volsync) — DORMANT
 
-### Why Caddy, not CiliumEnvoyConfig?
-
-CiliumEnvoyConfig cannot inject filters into Gateway API proxies (cilium/cilium#26941). Caddy `forward_auth` is proven and simple.
-
-## Backups (Volsync)
-
-Volsync performs scheduled Restic backups to Garage S3 (`192.168.50.177:3900/homelab`).
-
-### App Opt-In
-
-Add the volsync component to your app's `ks.yaml`:
-
-```yaml
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: &app myapp
-  namespace: flux-system
-spec:
-  targetNamespace: default
-  path: ./kubernetes/apps/default/myapp/app
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-  components:
-    - ../../../../components/volsync
-  dependsOn:
-    - name: volsync
-  postBuild:
-    substitute:
-      APP: *app
-      VOLSYNC_CAPACITY: 5Gi
-    substituteFrom:
-      - kind: ConfigMap
-        name: cluster-settings
-```
-
-This creates:
-- **ReplicationSource** — scheduled backup every 6h (retain 7 daily / 4 weekly / 3 monthly)
-- **ReplicationDestination** — manual restore trigger
-- **ExternalSecret** — restic + S3 creds from 1Password (`volsync-restic` item)
-- **PVC** — with `dataSourceRef` pointing to ReplicationDestination (auto-restore on fresh cluster)
-
-### Manual Snapshot
-
-```bash
-kubectl -n <namespace> annotate replicationsource <app>-backup --overwrite \
-  volsync.backube/trigger=$(date +%s)
-```
-
-### Restore
-
-```bash
-# 1. Scale down
-kubectl -n <ns> scale deploy/<app> --replicas=0
-
-# 2. Trigger restore
-kubectl -n <ns> patch replicationdestination <app> \
-  --type merge -p '{"spec":{"trigger":{"manual":"restore-'$(date +%s)'"}}}'
-
-# 3. Wait for completion
-kubectl -n <ns> get replicationdestination <app> -w
-
-# 4. Scale up
-kubectl -n <ns> scale deploy/<app> --replicas=1
-```
+Volsync is installed but the per-app backup wiring is **dormant**: the `components/volsync` kustomize component used Flux's `${APP}` postBuild substitution + the `cluster-settings` ConfigMap, neither of which exists under Argo. It needs an Argo-native redesign (ApplicationSet parameters / per-app values) before backups are active again. Do not rely on it until reworked.
 
 ## Secrets
 
@@ -289,12 +231,12 @@ All secrets flow through **1Password Connect** + **External Secrets Operator**:
 
 ```
 1Password vault "homelab"
-  └─> 1Password Connect (security ns)
+  └─> 1Password Connect (security ns)        # root cred seeded by Terraform from `pass`
         └─> ClusterSecretStore "onepassword"
               └─> ExternalSecret (per-app) ─> Kubernetes Secret
 ```
 
-Bootstrap chicken-and-egg: 1Password Connect credentials are SOPS-encrypted in git (`secret.sops.yaml`). Everything else uses ExternalSecret.
+The root of trust — the `onepassword-connect` Secret — is seeded by **Terraform** from `pass` (`terraform/argocd-bootstrap.tf`), NOT SOPS-in-git. Everything else uses ExternalSecret.
 
 ### Example: ExternalSecret
 
@@ -319,33 +261,29 @@ spec:
 
 ## E2E Storage Test
 
-Manually triggered test that verifies all storage classes (`local-nvme`, `ceph-bulk`, `nfs-unraid`, `synology-iscsi`) are working. Not managed by Flux — run after significant storage or PVC changes.
+Manually triggered test that verifies all storage classes (`local-nvme`, `ceph-bulk`, `nfs-unraid`, `synology-iscsi`). Not Argo-managed — run after significant storage or PVC changes.
 
 ```bash
-# Deploy test (creates PVCs, deployment, service, HTTPRoute)
-kubectl apply -k kubernetes/apps/default/e2e-test/app
-
+kubectl apply -k kubernetes/apps/default/e2e-test/app   # deploy
 # Check results at http://test-lan.ringbell.cc
-# Shows per-backend status (OK/FAIL), persistence verification, and raw file links
-
-# Clean up when done
-kubectl delete -k kubernetes/apps/default/e2e-test/app
+kubectl delete -k kubernetes/apps/default/e2e-test/app  # clean up
 ```
 
 ## Gotchas
 
-See `docs/troubleshooting.md` for full details (13 issues). Top ones:
+See `docs/troubleshooting.md` for storage/networking details. Argo CD + this cluster specifically:
 
-1. **Never jump 15+ chart versions** — ESO 0.14→2.2 caused hours of cascading failures. Upgrade incrementally.
-2. **Restart kustomize-controller after CRD changes** — `kubectl -n flux-system rollout restart deploy/kustomize-controller`
-3. **StorageClass params are immutable** — delete SC, suspend/resume HR to recreate
-4. **Privileged PodSecurity** needed for `storage`, `observability`, `kube-system` namespaces
-5. **Cilium needs experimental Gateway API CRDs** — standard channel lacks TLSRoute
-6. **Cloudflared needs `--protocol http2`** — QUIC blocked in most home networks
-7. **`wait: false` for cluster-scoped resources** — Flux can't health-check ClusterSecretStore with `targetNamespace`
-8. **Rook-Ceph SC parameters** — custom `parameters` replaces chart defaults; must include `csi.storage.k8s.io/*` refs
-9. **Prometheus must NOT use NFS** — causes WAL corruption; use `ceph-block`
-10. **ServiceMonitor before Prometheus** — add `trustCRDsExist: true` to any chart enabling ServiceMonitors
-11. **CiliumEnvoyConfig can't inject into Gateway API** — cilium/cilium#26941; use Caddy `forward_auth` for auth
-12. **Authelia chart secret keys use dot-paths** — e.g. `identity_validation.reset_password.jwt.hmac.key`, not `JWT_TOKEN`. Always `helm show values` first.
-13. **Homepage needs writable `/app/config`** — ConfigMap is read-only; use emptyDir + init-container copy pattern
+1. **ServerSideDiff must be on** (`controller.diff.server.side: "true"`) — else Gateway API HTTPRoutes are perpetually OutOfSync from server-applied default fields.
+2. **Chart-generated secrets** (harbor internal, grafana admin): make them **declarative** (source from 1Password via ExternalSecret + the chart's `existingSecret` knobs) so renders are byte-stable. Fragile alternative: per-app `ignoreDifferences` on the secret `/data` + the dependent Deployment's checksum annotations, **plus** global `RespectIgnoreDifferences=true` (without it, sync still rotates them).
+3. **cilium Hubble certs**: `ignoreDifferences` on `cilium-ca`/`hubble-server-certs`/`hubble-relay-client-certs` `/data` is the **correct upstream pattern** (auto-generated, non-idempotent — cilium docs "Troubleshooting Cilium deployed with Argo CD"), not a hack to remove.
+4. **SSA can't remove fields owned by another manager / left from client-side apply** (argoproj/argo-cd#23214): the app shows **Synced with no diff while live ≠ git**. Fix: the `argocd.argoproj.io/client-side-apply-migration-manager` annotation, `Replace=true`, or delete-and-recreate the resource.
+5. **RollingUpdate→Recreate won't apply via SSA** (mutually-exclusive `strategy.rollingUpdate` vs `type: Recreate`): `kubectl patch deploy X --type=merge -p '{"spec":{"strategy":{"type":"Recreate","rollingUpdate":null}}}'` (matches git). Harbor registry/jobservice need Recreate (RWO PVCs deadlock on RollingUpdate Multi-Attach).
+6. **repo-server caches branch→commit**: after a push, `kubectl -n argocd rollout restart deploy/argocd-repo-server` (+ `argocd-applicationset-controller` for `app.yaml` changes) to force a fresh render instead of waiting ~3 min.
+7. **Privileged PodSecurity** needed for `storage`, `observability`, `kube-system` namespaces.
+8. **Cilium needs experimental Gateway API CRDs** — standard channel lacks TLSRoute.
+9. **Cloudflared needs `--protocol http2`** — QUIC blocked in most home networks.
+10. **Rook-Ceph SC parameters** — custom `parameters` replaces chart defaults; must include `csi.storage.k8s.io/*` refs. StorageClass params are immutable — delete + recreate.
+11. **Prometheus must NOT use NFS** — causes WAL corruption; use `ceph-block`.
+12. **CiliumEnvoyConfig can't inject into Gateway API** — cilium/cilium#26941; use Caddy `forward_auth` for auth.
+13. **Authelia chart secret keys use dot-paths** — e.g. `identity_validation.reset_password.jwt.hmac.key`. Always `helm show values` first.
+14. **The Bash here runs zsh** — `for x in $string` does NOT word-split; use file-based `while read` loops for cluster scripts.
