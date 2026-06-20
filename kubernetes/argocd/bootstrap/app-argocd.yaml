@@ -25,10 +25,25 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd
+  ignoreDifferences:
+    # argocd-server writes server.secretkey / admin.password(Mtime) / tls.* into
+    # argocd-secret at RUNTIME; the chart renders it empty. Ignore /data so a
+    # self-managing sync never wipes login keys or invalidates live sessions
+    # (argo-helm#200). Honoured at sync time via RespectIgnoreDifferences below.
+    - group: ""
+      kind: Secret
+      name: argocd-secret
+      namespace: argocd
+      jsonPointers:
+        - /data
   syncPolicy:
     automated:
-      prune: true
+      # prune OFF on the control plane: a bad render must never delete argocd
+      # itself (CRDs are also resource-policy=keep). selfHeal ON so edits to
+      # values/argocd.yaml auto-apply — the whole point of self-management.
+      prune: false
       selfHeal: true
     syncOptions:
       - ServerSideApply=true
       - ApplyOutOfSyncOnly=true
+      - RespectIgnoreDifferences=true
