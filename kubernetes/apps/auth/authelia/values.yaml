@@ -94,6 +94,7 @@ configMap:
             - https://grafana.ringbell.cc/login/generic_oauth
           scopes:
             - openid
+            - offline_access
             - profile
             - email
             - groups
@@ -116,6 +117,7 @@ configMap:
             - https://grafana-host.ringbell.cc/login/generic_oauth
           scopes:
             - openid
+            - offline_access
             - profile
             - email
             - groups
@@ -137,6 +139,7 @@ configMap:
             - https://harbor.ringbell.cc/c/oidc/callback
           scopes:
             - openid
+            - offline_access
             - profile
             - email
             - groups
@@ -159,6 +162,7 @@ configMap:
             - https://git.ringbell.cc/user/oauth2/authelia/callback
           scopes:
             - openid
+            - offline_access
             - profile
             - email
             - groups
@@ -181,6 +185,7 @@ configMap:
             - https://proxmox.ringbell.cc
           scopes:
             - openid
+            - offline_access
             - profile
             - email
             - groups
