@@ -109,7 +109,8 @@ Each app is `kubernetes/apps/<namespace>/<app-name>/` with a metadata file the A
 - Never print secrets to stdout — use `$(pass show ...)` inline.
 
 ### Storage
-- `ceph-block`: App data (fast SSD, replicated, RWO)
+- `ceph-bulk`: App data (Rook-Ceph RBD, replicated size=2, RWO)
+- `local-nvme`: Fast node-local scratch (local-path, no replication, RWO)
 - `nfs-unraid`: Bulk/shared data (31TB, RWX)
 - `synology-iscsi`: NAS-protected data (RWO, WaitForFirstConsumer)
 
