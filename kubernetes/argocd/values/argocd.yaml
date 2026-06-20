@@ -3,6 +3,30 @@
 global:
   domain: argocd.ringbell.cc
 
+# --- Observability: expose Prometheus metrics + a ServiceMonitor for every
+# component so the GitOps control plane isn't a blind spot (kube-prometheus-stack
+# scrapes all ServiceMonitors). Replaces the flux-monitoring removed in migration.
+controller:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+server:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+repoServer:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+applicationSet:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
 configs:
   params:
     # TLS is terminated upstream at the Cilium Gateway; run argocd-server insecure.
