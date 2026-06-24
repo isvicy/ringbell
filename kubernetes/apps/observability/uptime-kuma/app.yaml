@@ -1,0 +1,5 @@
+name: uptime-kuma
+namespace: observability
+wave: 6
+type: kustomize
+adopted: true

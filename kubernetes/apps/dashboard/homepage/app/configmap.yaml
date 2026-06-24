@@ -24,7 +24,7 @@ data:
         columns: 3
       Monitoring:
         style: row
-        columns: 4
+        columns: 5
   bookmarks.yaml: ""
   services.yaml: |
     - Infrastructure:
@@ -92,6 +92,10 @@ data:
             href: https://hubble.ringbell.cc
             description: Network Observability
             icon: cilium
+        - Uptime Kuma:
+            href: https://kuma.ringbell.cc
+            description: Uptime & proxy monitoring
+            icon: uptime-kuma
   widgets.yaml: |
     - kubernetes:
         cluster:
