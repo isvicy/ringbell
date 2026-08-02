@@ -1,0 +1,5 @@
+name: reports
+namespace: default
+wave: 6
+type: kustomize
+adopted: true

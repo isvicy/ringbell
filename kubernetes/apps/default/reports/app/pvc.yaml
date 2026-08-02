@@ -1,0 +1,11 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: reports-data
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: ceph-bulk
+  resources:
+    requests:
+      storage: 2Gi
