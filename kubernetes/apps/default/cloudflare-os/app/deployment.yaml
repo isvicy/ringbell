@@ -1,0 +1,72 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudflare-os
+  labels:
+    app: cloudflare-os
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate # RWO PVC
+  selector:
+    matchLabels:
+      app: cloudflare-os
+  template:
+    metadata:
+      labels:
+        app: cloudflare-os
+    spec:
+      securityContext:
+        fsGroup: 1000 # node
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: cloudflare-os
+          image: harbor.ringbell.cc/library/cloudflare-os:0.1.0
+          ports:
+            - containerPort: 8787
+          env:
+            - name: TZ
+              value: Asia/Shanghai
+            - name: PUBLIC_BASE_URL
+              value: https://cloudflare-os.ringbell.cc
+          volumeMounts:
+            - name: data
+              mountPath: /app/.wrangler
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: "4"
+              memory: 4Gi
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000 # node
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          # Not readOnlyRootFilesystem: the launcher regenerates wrangler.dev.jsonc
+          # and gatekeeper UI bundles next to the source at startup.
+          startupProbe:
+            httpGet:
+              path: /
+              port: 8787
+            failureThreshold: 90 # multi-worker wrangler boot is slow
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8787
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8787
+            periodSeconds: 30
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: cloudflare-os-data
