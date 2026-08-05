@@ -38,10 +38,12 @@ spec:
           resources:
             requests:
               cpu: 500m
-              memory: 1Gi
+              memory: 2Gi
             limits:
-              cpu: "4"
-              memory: 4Gi
+              # Startup runs ~30 esbuild/vite/capnweb-validate builds plus 18 workerd
+              # instances; observed OOM at 4Gi. Steady state is much lower.
+              cpu: "6"
+              memory: 8Gi
           securityContext:
             runAsNonRoot: true
             runAsUser: 1000 # node
