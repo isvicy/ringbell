@@ -14,6 +14,7 @@ FROM node:22-bookworm-slim
 ARG CLOUDFLARE_OS_REF=aedcda8b3066ff666f57ae28ecef7341d6c2dee7 # gitleaks:allow — upstream git commit, not a secret
 
 # git: clone upstream. python3/make/g++: safety net for native npm modules.
+# procps: wrangler's process management spawns `ps` (absent in slim images -> crash).
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
       ca-certificates \
@@ -21,6 +22,7 @@ RUN apt-get update \
       python3 \
       make \
       g++ \
+      procps \
  && rm -rf /var/lib/apt/lists/*
 
 # Pin pnpm globally for all users (corepack shims re-download pnpm per-user at
