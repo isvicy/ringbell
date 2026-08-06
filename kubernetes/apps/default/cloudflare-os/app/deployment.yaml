@@ -32,6 +32,18 @@ spec:
               value: Asia/Shanghai
             - name: PUBLIC_BASE_URL
               value: https://cloudflare-os.ringbell.cc
+            # GitHub gatekeeper OAuth creds — run-dev-server.js injects them into the
+            # gatekeeper-github worker at startup (SHARED_GATEKEEPER_CREDS).
+            - name: GITHUB_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: cloudflare-os-secret
+                  key: github-client-id
+            - name: GITHUB_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: cloudflare-os-secret
+                  key: github-client-secret
           volumeMounts:
             - name: data
               mountPath: /app/.wrangler
