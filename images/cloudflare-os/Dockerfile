@@ -35,9 +35,12 @@ RUN git init -q . \
  && git fetch -q --depth 1 origin "$CLOUDFLARE_OS_REF" \
  && git checkout -q --detach FETCH_HEAD
 
-# Let wrangler accept non-loopback connections inside the pod (BIND_IP env).
-COPY bind-ip.patch /tmp/bind-ip.patch
-RUN git apply /tmp/bind-ip.patch
+# Container compatibility fixes (see container-compat.patch):
+#  - BIND_IP env lets wrangler accept non-loopback connections inside the pod.
+#  - PUBLIC_BASE_URL env is propagated to each gatekeeper as BASE_URL, so their
+#    OAuth/redirect URLs point at the public origin instead of localhost:8787.
+COPY container-compat.patch /tmp/container-compat.patch
+RUN git apply /tmp/container-compat.patch
 
 RUN --mount=type=cache,id=cloudflare-os-pnpm-store,target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile

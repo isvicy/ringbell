@@ -1,0 +1,29 @@
+diff --git a/run-dev-server.js b/run-dev-server.js
+index a5aba89..a455ef3 100644
+--- a/run-dev-server.js
++++ b/run-dev-server.js
+@@ -215,6 +215,15 @@ for (const gk of gatekeepers) {
+     }
+   }
+ 
++  // Container deployments serve gatekeepers behind a public origin; without
++  // BASE_URL each gatekeeper defaults OAuth/redirect URLs to http://localhost:8787.
++  if (process.env.PUBLIC_BASE_URL !== undefined) {
++    config.vars = config.vars || {};
++    if (config.vars.BASE_URL === undefined) {
++      config.vars.BASE_URL = `${process.env.PUBLIC_BASE_URL}/gatekeeper/${gk.name.slice("gatekeeper-".length)}`;
++    }
++  }
++
+   const outPath = join(gk.dir, "wrangler.dev.jsonc");
+   writeFileSync(outPath, JSON.stringify(config, null, 2) + "\n");
+   console.log(`generated: ${outPath}`);
+@@ -301,6 +310,8 @@ const configs = [
+ ];
+ 
+ const args = configs.flatMap(c => ["-c", c]);
++// Container deployments need to accept connections from outside localhost.
++if (process.env.BIND_IP) args.push("--ip", process.env.BIND_IP);
+ const backendHost = process.env.VITE_BACKEND_HOST;
+ if (backendHost) {
+   let wranglerPort;

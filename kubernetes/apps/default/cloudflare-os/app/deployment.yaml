@@ -24,7 +24,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: cloudflare-os
-          image: harbor.ringbell.cc/library/cloudflare-os:0.1.1
+          image: harbor.ringbell.cc/library/cloudflare-os:0.1.2
           ports:
             - containerPort: 8787
           env:
@@ -32,6 +32,11 @@ spec:
               value: Asia/Shanghai
             - name: PUBLIC_BASE_URL
               value: https://cloudflare-os.ringbell.cc
+            # Debug logging to the PVC so crash forensics survive container restarts.
+            - name: WRANGLER_LOG
+              value: debug
+            - name: WRANGLER_LOG_PATH
+              value: /app/.wrangler/wrangler-logs
             # GitHub gatekeeper OAuth creds — run-dev-server.js injects them into the
             # gatekeeper-github worker at startup (SHARED_GATEKEEPER_CREDS).
             - name: GITHUB_CLIENT_ID

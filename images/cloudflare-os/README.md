@@ -23,16 +23,16 @@ good enough for homelab experimentation.
 ```bash
 cd images/cloudflare-os
 docker buildx build --platform linux/amd64 \
-  -t harbor.ringbell.cc/library/cloudflare-os:0.1.0 --push .
+  -t harbor.ringbell.cc/library/cloudflare-os:0.1.2 --push .
 # verify before bumping the tag in kubernetes/apps/default/cloudflare-os/app/deployment.yaml:
-skopeo inspect docker://harbor.ringbell.cc/library/cloudflare-os:0.1.0 \
+skopeo inspect docker://harbor.ringbell.cc/library/cloudflare-os:0.1.2 \
   --creds "isvicy:$(pass show harbor/cli-secret)" | head
 ```
 
 ## Upgrading upstream
 
 1. Pick a new commit from https://github.com/cloudflare/cloudflare-os
-2. Update `CLOUDFLARE_OS_REF` in the `Dockerfile`; regenerate `bind-ip.patch` if
-   `run-dev-server.js` changed around the wrangler-args anchor
-   (`git diff` the same one-line `BIND_IP` insertion against the new ref).
+2. Update `CLOUDFLARE_OS_REF` in the `Dockerfile`; regenerate `container-compat.patch` if
+   `run-dev-server.js` changed around the patch anchors (edit the same two insertions —
+   `BIND_IP` arg and per-gatekeeper `BASE_URL` — against the new ref, then `git diff`).
 3. Bump the image tag, rebuild/push, update `deployment.yaml`.
