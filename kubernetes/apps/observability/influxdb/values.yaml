@@ -15,3 +15,9 @@ initScripts:
   scripts:
     init.iql: |
       CREATE DATABASE "GarminStats" WITH DURATION INF REPLICATION 1 NAME "autogen"
+resources:
+  requests:
+    memory: 512Mi
+    cpu: 100m
+  limits:
+    memory: 2Gi
